@@ -1,0 +1,332 @@
+﻿@model CaramelCloud.UI.Models.Order.CreateOrderViewModel
+@{
+    ViewData["Title"] = "Нове замовлення";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Нове замовлення</h2>
+            <p class="text-muted mb-0" style="font-size: .875rem;">
+                Створення замовлення адміністратором
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-cc px-4">
+            <i class="bi bi-arrow-left me-2"></i>Назад
+        </a>
+    </div>
+
+    <div class="cc-form-card p-0" style="background: transparent; border: none; box-shadow: none;">
+        <form method="post" id="orderForm">
+            @Html.AntiForgeryToken()
+            
+            <div class="cc-section-block">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background: rgba(139,69,19,.1);">
+                        <i class="bi bi-person text-primary fs-5"></i>
+                    </div>
+                    <h5 class="fw-semibold text-dark m-0" style="font-family:'Cormorant Garamond',serif; font-size: 1.4rem;">
+                        1. Інформація про клієнта
+                    </h5>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;">
+                            Пошук (існуючий клієнт)
+                        </label>
+                        <input type="text" id="clientSearch" class="form-control" placeholder="Введіть ім'я або email..." list="clientList" autocomplete="off" />
+                        <input type="hidden" asp-for="CustomerProfileId" id="CustomerProfileId" />
+                        <datalist id="clientList">
+                            @foreach (var cp in Model.CustomerProfiles)
+                            {
+                                <option data-id="@cp.Value">@cp.Text</option>
+                            }
+                        </datalist>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label asp-for="CustomerName" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <input asp-for="CustomerName" id="CustomerName" class="form-control" placeholder="Ім'я клієнта" />
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label asp-for="CustomerPhone" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <input asp-for="CustomerPhone" id="CustomerPhone" class="form-control" placeholder="+380..." />
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cc-section-block">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background: rgba(139,69,19,.1);">
+                        <i class="bi bi-truck text-primary fs-5"></i>
+                    </div>
+                    <h5 class="fw-semibold text-dark m-0" style="font-family:'Cormorant Garamond',serif; font-size: 1.4rem;">
+                        2. Доставка та оплата
+                    </h5>
+                </div>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label asp-for="PaymentMethodId" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <select asp-for="PaymentMethodId" asp-items="Model.PaymentMethods" class="form-select cursor-pointer">
+                            <option value="">— Оберіть —</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="DeliveryMethodId" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <select asp-for="DeliveryMethodId" asp-items="Model.DeliveryMethods" class="form-select cursor-pointer">
+                            <option value="">— Оберіть —</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="DeliveryAddressId" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <select asp-for="DeliveryAddressId" class="form-select cursor-pointer mb-2">
+                            <option value="">— Самовивіз / не вказано —</option>
+                            @foreach (var addr in Model.DeliveryAddresses)
+                            {
+                                <option value="@addr.Value">@addr.Text</option>
+                            }
+                        </select>
+                        <a asp-controller="DeliveryAddress" asp-action="Create" asp-route-returnUrl="@Url.Action("Create", "Order")" class="text-primary fw-medium" style="font-size: 0.85rem; text-decoration: none;">
+                            <i class="bi bi-plus-circle me-1"></i>Нова адреса
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="DeliveryDate" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <input asp-for="DeliveryDate" type="text" class="form-control datetimepicker cursor-pointer" placeholder="Оберіть дату і час..." style="background-color: #fff;" />
+                    </div>
+                </div>
+
+                <div>
+                    <label asp-for="Comment" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                    <textarea asp-for="Comment" class="form-control" rows="2" style="border-radius: 16px; resize:none;" placeholder="Додаткові побажання до замовлення..."></textarea>
+                </div>
+            </div>
+            
+            <div class="cc-section-block mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background: rgba(139,69,19,.1);">
+                            <i class="bi bi-bag text-primary fs-5"></i>
+                        </div>
+                        <h5 class="fw-semibold text-dark m-0" style="font-family:'Cormorant Garamond',serif; font-size: 1.4rem;">
+                            3. Склад замовлення
+                        </h5>
+                    </div>
+                    <button type="button" class="btn btn-outline-cc btn-sm py-2 px-3" onclick="addRow()">
+                        <i class="bi bi-plus-lg me-1"></i>Додати десерт
+                    </button>
+                </div>
+
+                <div id="order-items">
+                    <div class="order-row d-flex gap-3 align-items-center mb-3 pb-3 border-bottom" id="row-0">
+                        <div class="product-img-box rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: #F5F5F5; border: 1px solid var(--cc-border); overflow: hidden; flex-shrink: 0;">
+                            <img id="img-0" src="" class="d-none w-100 h-100" style="object-fit: cover;" alt="Фото" />
+                            <i id="icon-0" class="bi bi-image text-muted fs-3"></i>
+                        </div>
+                        
+                        <div style="flex:1;">
+                            <label class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;">Продукт</label>
+                            <select name="Items[0].ProductId" class="form-select cursor-pointer product-select" onchange="updateRowData(this, 0)">
+                                <option value="" data-price="0" data-img="">— Оберіть продукт —</option>
+                                @foreach (var p in Model.Products)
+                                    {
+                                        var imgUrl = (Model.ProductImages != null && Model.ProductImages.ContainsKey(p.Value)) 
+                                                     ? Model.ProductImages[p.Value] 
+                                                     : "";
+                                 
+                                        <option value="@p.Value" data-price="@GetPrice(p.Text)" data-img="@imgUrl">@p.Text</option>
+                                    }
+                            </select>
+                        </div>
+                        <div style="width:110px; flex-shrink: 0;">
+                            <label class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;">Кількість</label>
+                            <input type="number" name="Items[0].Quantity" value="1" min="1" class="form-control text-center" oninput="updateRowData(this.closest('.order-row').querySelector('.product-select'), 0)" />
+                        </div>
+                        <div style="width:130px; flex-shrink: 0;">
+                            <label class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;">Сума</label>
+                            <div id="sum-0" class="form-control text-end fw-bold" style="background:#FFF8F0; color:var(--cc-primary); border-color:rgba(139,69,19,0.2);">0.00 ₴</div>
+                        </div>
+                        <div style="padding-top: 1.5rem; flex-shrink: 0;">
+                            <button type="button" class="btn btn-outline-danger btn-sm" style="border-radius:50px; width:42px; height:42px; display:flex; align-items:center; justify-content:center;" onclick="removeRow(this)">
+                                <i class="bi bi-trash fs-6"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 mt-4">
+                <button type="submit" class="btn btn-primary px-5 py-3 fs-6">
+                    <i class="bi bi-check-circle me-2"></i>Створити замовлення
+                </button>
+                <a asp-action="Index" class="btn btn-light px-5 py-3 text-dark fs-6" style="border-radius: 50px; font-weight:600; border: 1px solid var(--cc-border);">
+                    Скасувати
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .cc-section-block {
+        background: #fff;
+        border: 1px solid var(--cc-border);
+        border-radius: 1.25rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,.02);
+    }
+    .cursor-pointer {
+        cursor: pointer !important;
+    }
+    .product-img-box i {
+        line-height: 0;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/uk.js"></script>
+    
+    <script>
+        flatpickr(".datetimepicker", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true,
+            locale: "uk", 
+            minDate: "today" 
+        });
+
+        let rowCount = 1;
+        
+        const products = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.Products.Select(p => new {
+                value = p.Value,
+                text  = p.Text,
+                price = GetPriceDecimal(p.Text),
+                img = (Model.ProductImages != null && Model.ProductImages.ContainsKey(p.Value)) 
+              ? Model.ProductImages[p.Value] 
+              : ""
+    }).ToList()
+        ));
+
+        document.getElementById('clientSearch').addEventListener('input', function () {
+            const input = this.value;
+            const opts  = [...document.querySelectorAll('#clientList option')];
+            const found = opts.find(o => o.textContent === input);
+
+            const clientId = found?.dataset.id ?? '';
+            document.getElementById('CustomerProfileId').value = clientId;
+
+            if (clientId) {
+                fetch(`/Order/GetCustomerInfo?id=${clientId}`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(data => {
+                        if (!data) return;
+                        document.getElementById('CustomerName').value  = data.name  || '';
+                        document.getElementById('CustomerPhone').value = data.phone || '';
+                    })
+                    .catch(() => {});
+            } else {
+                if (!input) {
+                    document.getElementById('CustomerName').value  = '';
+                    document.getElementById('CustomerPhone').value = '';
+                }
+            }
+        });
+
+        function addRow() {
+            const i = rowCount++;
+            const opts = products.map(p =>
+                `<option value="${p.value}" data-price="${p.price}" data-img="${p.img}">${p.text}</option>`
+            ).join('');
+            
+            const html = `
+            <div class="order-row d-flex gap-3 align-items-center mb-3 pb-3 border-bottom" id="row-${i}">
+                <div class="product-img-box rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: #F5F5F5; border: 1px solid var(--cc-border); overflow: hidden; flex-shrink: 0;">
+                    <img id="img-${i}" src="" class="d-none w-100 h-100" style="object-fit: cover;" alt="Фото" />
+                    <i id="icon-${i}" class="bi bi-image text-muted fs-3"></i>
+                </div>
+                
+                <div style="flex:1;">
+                    <label class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;">Продукт</label>
+                    <select name="Items[${i}].ProductId" class="form-select cursor-pointer product-select" onchange="updateRowData(this, ${i})">
+                        <option value="" data-price="0" data-img="">— Оберіть продукт —</option>${opts}
+                    </select>
+                </div>
+                <div style="width:110px; flex-shrink: 0;">
+                    <label class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;">Кількість</label>
+                    <input type="number" name="Items[${i}].Quantity" value="1" min="1" class="form-control text-center" oninput="updateRowData(this.closest('.order-row').querySelector('.product-select'), ${i})" />
+                </div>
+                <div style="width:130px; flex-shrink: 0;">
+                    <label class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;">Сума</label>
+                    <div id="sum-${i}" class="form-control text-end fw-bold" style="background:#FFF8F0; color:var(--cc-primary); border-color:rgba(139,69,19,0.2);">0.00 ₴</div>
+                </div>
+                <div style="padding-top: 1.5rem; flex-shrink: 0;">
+                    <button type="button" class="btn btn-outline-danger btn-sm" style="border-radius:50px; width:42px; height:42px; display:flex; align-items:center; justify-content:center;" onclick="removeRow(this)">
+                        <i class="bi bi-trash fs-6"></i>
+                    </button>
+                </div>
+            </div>`;
+            
+            document.getElementById('order-items').insertAdjacentHTML('beforeend', html);
+        }
+
+        function updateRowData(select, i) {
+            const opt = select?.selectedOptions?.[0];
+            const price = parseFloat(opt?.dataset?.price) || 0;
+            const imgSrc = opt?.dataset?.img || '';
+            
+            const row = select?.closest('.order-row') || document.getElementById(`row-${i}`);
+            const qty = parseInt(row?.querySelector('input[type="number"]')?.value) || 1;
+            
+            const sumEl = document.getElementById(`sum-${i}`);
+            if (sumEl) sumEl.textContent = price > 0 ? (price * qty).toFixed(2) + ' ₴' : '0.00 ₴';
+
+            const imgEl = document.getElementById(`img-${i}`);
+            const iconEl = document.getElementById(`icon-${i}`);
+            
+            if (imgSrc && imgSrc.trim() !== "") {
+                imgEl.src = imgSrc;
+                imgEl.classList.remove('d-none');
+                iconEl.classList.add('d-none');
+            } else {
+                imgEl.src = "";
+                imgEl.classList.add('d-none');
+                iconEl.classList.remove('d-none');
+            }
+        }
+
+        function removeRow(btn) {
+            const rows = document.querySelectorAll('.order-row');
+            if (rows.length <= 1) {
+                alert('Замовлення повинно мати хоча б один продукт');
+                return;
+            }
+            btn.closest('.order-row').remove();
+        }
+    </script>
+}
+
+@functions {
+    string GetPrice(string text)
+    {
+        var parts = text.Split('—');
+        return parts.Length > 1 ? parts[^1].Trim().Replace(" ₴", "").Replace(",", ".") : "0";
+    }
+    double GetPriceDecimal(string text)
+    {
+        var s = GetPrice(text);
+        return double.TryParse(s, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0;
+    }
+}

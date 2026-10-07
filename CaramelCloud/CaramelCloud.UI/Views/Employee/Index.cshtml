@@ -1,0 +1,177 @@
+﻿@using CaramelCloud.UI.Models.Employee
+@model IEnumerable<EmployeeViewModel>
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Працівники</h2>
+            <p class="text-muted mb-0 small">Управління персоналом кондитерської</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary px-4">
+            <i class="bi bi-person-plus me-2"></i>Додати працівника
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-auto">
+            <div class="cc-stat-card">
+                <div class="cc-stat-icon"><i class="bi bi-people"></i></div>
+                <div>
+                    <div class="cc-stat-value">@Model.Count()</div>
+                    <div class="cc-stat-label">Всього працівників</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="cc-stat-card cc-stat-card--active">
+                <div class="cc-stat-icon cc-stat-icon--active"><i class="bi bi-person-check"></i></div>
+                <div>
+                    <div class="cc-stat-value">@Model.Count(e => e.IsActive)</div>
+                    <div class="cc-stat-label">Активних</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="cc-stat-card">
+                <div class="cc-stat-icon"><i class="bi bi-person-dash"></i></div>
+                <div>
+                    <div class="cc-stat-value">@Model.Count(e => !e.IsActive)</div>
+                    <div class="cc-stat-label">Деактивованих</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cc-table-wrapper">
+
+        <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+            <span class="fw-semibold cc-serif" style="font-size:1.1rem;">Список працівників</span>
+            <div class="cc-search-wrapper">
+                <i class="bi bi-search cc-search-icon"></i>
+                <input type="text" class="form-control cc-search-input"
+                       placeholder="Пошук..." onkeyup="filterEmployees(this.value)">
+            </div>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-people fs-2 d-block mb-2" style="color:var(--cc-border);"></i>
+                <span class="cc-serif d-block mb-1" style="font-size:1.1rem; color:#171717;">Працівників поки немає</span>
+                <p class="mb-3 small">Додайте першого працівника, натиснувши кнопку вище.</p>
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-person-plus me-2"></i>Додати працівника
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table cc-table align-middle mb-0" id="employeeTable">
+                    <thead>
+                        <tr>
+                            <th style="width:64px;">Аватар</th>
+                            <th>ПІБ</th>
+                            <th style="width:160px;">Телефон</th>
+                            <th style="width:140px;">Посада</th>
+                            <th style="width:140px;">Дата прийому</th>
+                            <th style="width:120px; text-align:center;">Статус</th>
+                            <th class="text-end" style="width:180px;">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="cc-avatar">
+                                        @(e.FirstName?.Length > 0 ? e.FirstName[0].ToString().ToUpper() : "")@(e.LastName?.Length > 0 ? e.LastName[0].ToString().ToUpper() : "")
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="fw-semibold text-dark">@e.LastName @e.FirstName</span>
+                                </td>
+
+                                <td class="text-muted">
+                                    @(string.IsNullOrEmpty(e.Phone) ? "—" : e.Phone)
+                                </td>
+
+                                <td>
+                                    <span class="cc-badge cc-badge-position">@e.PositionName</span>
+                                </td>
+
+                                <td class="text-muted" style="font-size:.85rem;">
+                                    @(e.HiredAt.HasValue ? e.HiredAt.Value.ToString("dd.MM.yyyy") : "—")
+                                </td>
+
+                                <td class="text-center">
+                                    @if (e.IsActive)
+                                    {
+                                        <span class="cc-badge cc-badge-active">Активний</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="cc-badge cc-badge-inactive">Неактивний</span>
+                                    }
+                                </td>
+
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        <a asp-action="Edit" asp-route-id="@e.Id" class="cc-btn-table edit">Редагувати</a>
+                                        <a asp-action="Delete" asp-route-id="@e.Id" class="cc-btn-table delete">Видалити</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .cc-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(139,69,19,.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: .8rem;
+            color: var(--cc-primary);
+        }
+
+        .cc-badge-position {
+            background: rgba(139,69,19,.1);
+            color: var(--cc-primary-light);
+        }
+
+        .cc-badge-active {
+            background: rgba(40,167,69,.1);
+            color: #28a745;
+        }
+
+        .cc-badge-inactive {
+            background: rgba(107,114,128,.1);
+            color: #6b7280;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function filterEmployees(val) {
+            const rows = document.querySelectorAll('#employeeTable tbody tr');
+            const q = val.toLowerCase();
+            rows.forEach(r => {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+}

@@ -1,0 +1,163 @@
+﻿@model CaramelCloud.Domain.Entities.CakeFillingType
+@{
+    ViewData["Title"] = "Редагування начинки";
+}
+
+<div class="container-fluid pt-4 px-4 pb-5 d-flex flex-column align-items-center">
+    
+    <div class="d-flex justify-content-between align-items-end mb-4 w-100" style="max-width: 800px;">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:#171717;margin:0;">
+                Редагування: @Model.Name
+            </h2>
+            <p style="color:#6B6B6B;font-size:1rem;margin:.25rem 0 0;">Оновлення даних начинки</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-primary px-4" style="border-radius:8px;">
+            <i class="bi bi-arrow-left me-2"></i>Назад
+        </a>
+    </div>
+
+    <div class="cc-form-card w-100" style="max-width:800px; background:#fff; border-radius:16px; padding:2.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+        
+        <h5 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.4rem;margin-bottom:1.8rem;color:#8B4513;">
+            <i class="bi bi-pencil-square me-2"></i>Деталі начинки
+        </h5>
+
+        <form method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+                        Назва <span class="text-danger">*</span>
+                    </label>
+                    <input name="Name" value="@Model.Name" required class="form-control"
+                           style="border-radius:12px;padding:.85rem 1rem;" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+                        Доплата, ₴ <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <input name="ExtraPrice" type="number" step="0.01" min="0"
+                               value="@Model.ExtraPrice" required class="form-control"
+                               style="border-radius:12px 0 0 12px;padding:.85rem 1rem;" />
+                        <span class="input-group-text cc-input-addon" style="border-radius:0 12px 12px 0;">₴</span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+                        Рецепт
+                    </label>
+                    <select name="RecipeId" class="form-select" style="border-radius:12px;padding:.85rem 1rem;">
+                        <option value="">— Без рецепта —</option>
+                        @foreach (var r in (ViewBag.Recipes as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new()))
+                        {
+                            <option value="@r.Value" selected="@(r.Value == Model.RecipeId?.ToString())">@r.Text</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">Опис</label>
+                    <textarea name="Description" class="form-control" rows="3"
+                              style="border-radius:12px;padding:.85rem 1rem;resize:none;">@Model.Description</textarea>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">Фото</label>
+                    
+                    <div class="upload-area position-relative" style="background:#FAFAFA; cursor:pointer;">
+                        <input type="file" name="image" accept="image/*" class="file-input" onchange="previewImage(this)" title="Оберіть нове фото" />
+                        
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <div id="uploadPlaceholder" style="display:none;">
+                                <i class="bi bi-cloud-arrow-up" style="font-size:2rem; color:#8B4513; opacity:0.7;"></i>
+                                <div class="mt-2" style="font-size:0.95rem; font-weight:500; color:#4A4A4A;">Натисніть або перетягніть нове фото сюди</div>
+                                <div style="font-size:0.75rem; color:#888; margin-top:0.25rem;">Формати: JPG, PNG (бажано 1:1)</div>
+                            </div>
+                            <div id="imagePreviewContainer" style="display:flex; align-items:center; justify-content:center; gap:1.5rem;">
+                                <img id="imagePreview" src="@Model.ImageUrl" alt="Preview" style="max-height:100px; border-radius:10px; border:1px solid #EAEAEA;" />
+                                <span style="font-size:0.9rem; color:#8B4513; font-weight:600; text-decoration:underline;">Замінити фото</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div id="uploadPlaceholder">
+                                <i class="bi bi-cloud-arrow-up" style="font-size:2rem; color:#8B4513; opacity:0.7;"></i>
+                                <div class="mt-2" style="font-size:0.95rem; font-weight:500; color:#4A4A4A;">Натисніть або перетягніть фото сюди</div>
+                                <div style="font-size:0.75rem; color:#888; margin-top:0.25rem;">Формати: JPG, PNG (бажано 1:1)</div>
+                            </div>
+                            <div id="imagePreviewContainer" style="display:none; align-items:center; justify-content:center; gap:1.5rem;">
+                                <img id="imagePreview" src="" alt="Preview" style="max-height:100px; border-radius:10px; border:1px solid #EAEAEA;" />
+                                <span style="font-size:0.9rem; color:#8B4513; font-weight:600; text-decoration:underline;">Змінити фото</span>
+                            </div>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <div id="removeImageContainer" class="form-check mt-3 ms-1">
+                            <input type="checkbox" class="form-check-input" id="removeImage" name="removeImage" value="true"
+                                   style="cursor:pointer; transform:scale(1.25); margin-top:0.15rem;" />
+                            <label class="form-check-label text-danger fw-semibold" for="removeImage"
+                                   style="cursor:pointer; margin-left:0.35rem; font-size:0.95rem;">
+                                <i class="bi bi-trash me-1"></i>Видалити поточне фото
+                            </label>
+                        </div>
+                    }
+                </div>
+
+                <div class="col-12 mt-2">
+                    <div class="form-check" style="background:#FAFAFA; padding:1.2rem 1.2rem 1.2rem 3rem; border-radius:12px; border:1px solid #EAEAEA;">
+                        <input type="checkbox" name="IsAvailable" value="true" class="form-check-input"
+                               id="isAvail" checked="@Model.IsAvailable" style="margin-top:0.15rem; transform:scale(1.25); cursor:pointer;" />
+                        <input type="hidden" name="IsAvailable" value="false" />
+                        <label class="form-check-label fw-semibold" for="isAvail" style="color:#2C1A0E; margin-left:0.35rem; font-size:1rem; cursor:pointer;">
+                            Показувати в конструкторі торта
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:3rem;padding-top:1.8rem;border-top:1px solid #EAEAEA;" class="d-flex gap-3 justify-content-end">
+                <a asp-action="Index" class="btn btn-light px-4 py-2"
+                       style="border-radius:12px;background:#F8F9FA;color:#6B6B6B;border:1px solid #E9ECEF; font-weight:500;">
+                    Скасувати
+                </a>
+                <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius:12px; font-weight:500; font-size:1rem;">
+                    <i class="bi bi-check-lg me-2"></i>Зберегти зміни
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function previewImage(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('uploadPlaceholder').style.display = 'none';
+                    document.getElementById('imagePreviewContainer').style.display = 'flex';
+                    document.getElementById('imagePreview').src = e.target.result;
+                    
+                    const removeContainer = document.getElementById('removeImageContainer');
+                    if (removeContainer) {
+                        removeContainer.style.display = 'none';
+                        const removeCheckbox = document.getElementById('removeImage');
+                        if (removeCheckbox) removeCheckbox.checked = false;
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+}

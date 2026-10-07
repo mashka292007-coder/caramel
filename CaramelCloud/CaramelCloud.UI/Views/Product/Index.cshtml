@@ -1,0 +1,589 @@
+﻿@using CaramelCloud.UI.Models.Product
+@model IEnumerable<ProductViewModel>
+
+@{
+    ViewData["Title"] = "Меню кондитерської";
+    bool isAdmin = User.IsInRole("Admin");
+    var categories = Model.Select(m => m.CategoryName).Where(c => c != "—").Distinct().OrderBy(c => c).ToList();
+}
+
+@if (isAdmin)
+{
+    <div class="container-fluid pt-4 px-4 pb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">Продукти</h2>
+                <p class="text-muted mb-0 small">Керування асортиментом вашої кондитерської</p>
+            </div>
+            <a asp-controller="Product" asp-action="Create" class="btn btn-primary px-4">
+                <i class="bi bi-plus-lg me-2"></i>Додати продукт
+            </a>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-auto">
+                <div class="cc-stat-card">
+                    <div class="cc-stat-icon"><i class="bi bi-box-seam"></i></div>
+                    <div>
+                        <div class="cc-stat-value">@Model.Count()</div>
+                        <div class="cc-stat-label">Всього позицій</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="cc-stat-card cc-stat-card--active">
+                    <div class="cc-stat-icon cc-stat-icon--active"><i class="bi bi-check-circle"></i></div>
+                    <div>
+                        <div class="cc-stat-value">@Model.Count(p => p.IsAvailable)</div>
+                        <div class="cc-stat-label">Активних</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cc-table-wrapper">
+            <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+                <span class="fw-semibold cc-serif" style="font-size:1.1rem;">Список продуктів</span>
+                <div class="cc-search-wrapper">
+                    <i class="bi bi-search cc-search-icon"></i>
+                    <input type="text" class="form-control cc-search-input"
+                           placeholder="Пошук..." onkeyup="filterProductsAdmin(this.value)">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table cc-table align-middle mb-0" id="productTableAdmin">
+                    <thead>
+                        <tr>
+                            <th style="width:80px;">Фото</th>
+                            <th>Назва та категорія</th>
+                            <th style="width:120px;">Ціна</th>
+                            <th style="width:110px;">Вага</th>
+                            <th style="width:110px;">
+                                Порції <i class="bi bi-question-circle ms-1"
+                                          title="Кількість штук в одній одиниці товару"
+                                          style="cursor:help; font-size:.8rem;"></i>
+                            </th>
+                            <th style="width:120px; text-align:center;">Статус</th>
+                            <th class="text-end" style="width:180px;">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                    {
+                                        <img src="@item.ImageUrl" alt="@item.Name"
+                                             class="cc-category-img" style="width:55px; height:55px;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="cc-category-img-placeholder" style="width:55px; height:55px;">
+                                            <i class="bi bi-image"></i>
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark" style="font-size:.9rem;">@item.Name</div>
+                                    <div style="font-size:.75rem; color:var(--cc-primary-light); text-transform:uppercase; letter-spacing:.5px; margin-top:2px;">
+                                        @item.CategoryName
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark">
+                                        @item.Price.ToString("N0") <small style="font-size:.7rem;">ГРН</small>
+                                    </span>
+                                </td>
+                                <td class="text-muted" style="font-size:.85rem;">
+                                    @(item.Weight.HasValue ? $"{item.Weight:F2} кг" : "—")
+                                </td>
+                                <td class="text-muted" style="font-size:.85rem;">
+                                    @(item.ServingSize.HasValue ? $"{item.ServingSize} шт" : "—")
+                                </td>
+                                <td class="text-center">
+                                    @if (item.IsAvailable)
+                                    {
+                                        <span class="cc-badge cc-badge-status-4">Активний</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="cc-badge cc-badge-status-5">Немає</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-1">
+                                        <a asp-action="Edit"   asp-route-id="@item.Id" class="cc-btn-table edit">Редагувати</a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="cc-btn-table delete">Видалити</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="cc-catalog-bg">
+        <div class="cc-catalog-hero">
+            <div class="cc-catalog-hero-dots"></div>
+            <div class="container position-relative" style="z-index:1;">
+                <h1 class="cc-catalog-title">
+                    Каталог <span class="text-cc-primary">десертів</span>
+                </h1>
+                <div class="hero-divider"></div>
+                <p class="cc-catalog-subtitle">
+                    Все готується з любов'ю та виключно з найкращих інгредієнтів —
+                    оберіть ідеальний десерт для вашого свята або просто до кави.
+                </p>
+            </div>
+        </div>
+
+        <div class="container px-4 mt-2">
+            <div class="row justify-content-center mb-5">
+                <div class="col-12 col-md-10 col-lg-8">
+                    <div class="cc-catalog-filter-bar">
+                        <div class="cc-search-wrapper flex-grow-1">
+                            <i class="bi bi-search cc-search-icon"></i>
+                            <input type="text" id="clientSearch"
+                                   class="form-control cc-search-input cc-catalog-search"
+                                   placeholder="Який десерт шукаєте?"
+                                   onkeyup="filterClientCatalog()">
+                        </div>
+                        <select id="clientCategory"
+                                class="cc-select"
+                                onchange="filterClientCatalog()">
+                            <option value="all">Всі категорії</option>
+                            @foreach (var cat in categories)
+                            {
+                                <option value="@cat">@cat</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4" id="clientProductGrid">
+                @foreach (var item in Model)
+                {
+                    <div class="col product-card-col" data-category="@item.CategoryName">
+                        <div class="cc-product-card">
+                            <div class="cc-product-img-wrap">
+                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                {
+                                    <img src="@item.ImageUrl" alt="@item.Name" class="cc-product-img" />
+                                }
+                                else
+                                {
+                                    <div class="cc-product-img-placeholder">
+                                        <i class="bi bi-camera"></i>
+                                    </div>
+                                }
+                                <span class="cc-product-category-badge">@item.CategoryName</span>
+                            </div>
+
+                            <div class="cc-product-body">
+                                <div class="cc-product-header">
+                                    <h5 class="cc-product-name cc-serif">@item.Name</h5>
+                                    <span class="cc-product-price text-cc-primary">@item.Price.ToString("N0") ₴</span>
+                                </div>
+
+                                <p class="cc-product-desc text-muted">
+                                    @(string.IsNullOrEmpty(item.Description)
+                                        ? "Неймовірно смачний десерт від наших кондитерів."
+                                        : item.Description)
+                                </p>
+
+                                <div class="cc-product-meta">
+                                    @if (item.Weight.HasValue)
+                                    {
+                                        <span><i class="bi bi-bag me-1"></i>@item.Weight.Value.ToString("F2") кг</span>
+                                    }
+                                    @if (item.ServingSize.HasValue)
+                                    {
+                                        <span><i class="bi bi-pie-chart me-1"></i>@item.ServingSize порцій</span>
+                                    }
+                                </div>
+
+                                @if (item.IsAvailable)
+                                {
+                                    @if (User.Identity?.IsAuthenticated == true)
+                                    {
+                                        <button onclick="addToCart(@item.Id, '@item.Name.Replace("'", "\'")', @item.Price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), '@item.ImageUrl')"
+                                                class="btn btn-primary w-100 cc-product-btn">
+                                            <i class="bi bi-cart-plus me-2"></i>Додати в кошик
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <a asp-controller="Auth" asp-action="Login"
+                                           class="btn btn-outline-primary w-100 cc-product-btn">
+                                            <i class="bi bi-box-arrow-in-right me-2"></i>Увійдіть, щоб купити
+                                        </a>
+                                    }
+                                }
+                                else
+                                {
+                                    <button disabled class="btn w-100 cc-product-btn cc-product-btn-disabled">
+                                        Немає в наявності
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div id="noProductsMsg" class="text-center py-5 d-none">
+                <i class="bi bi-emoji-frown" style="font-size:3rem; color:var(--cc-caramel);"></i>
+                <h4 class="mt-3 cc-serif">На жаль, нічого не знайдено</h4>
+                <p class="text-muted">Спробуйте змінити критерії пошуку або обрати іншу категорію.</p>
+            </div>
+        </div>
+
+        <template id="chatProductCard">
+            <div class="ai-product-card">
+                <div class="ai-product-img"></div>
+                <div class="ai-product-info">
+                    <div class="ai-product-name"></div>
+                    <div class="ai-product-price"></div>
+                </div>
+                <button class="ai-product-btn">
+                    <i class="bi bi-cart-plus me-1"></i>В кошик
+                </button>
+            </div>
+        </template>
+
+        <template id="chatResetBtn">
+            <div class="ai-msg ai-msg--bot">
+                <button class="ai-reset-btn" onclick="clearAiFilter()">
+                    <i class="bi bi-x me-1"></i>Скинути фільтр
+                </button>
+            </div>
+        </template>
+
+        @if (User.IsInRole("Customer"))
+        {
+            <partial name="_AiChat" />  
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function filterProductsAdmin(val) {
+            const rows = document.querySelectorAll('#productTableAdmin tbody tr');
+            if (!rows.length) return;
+            const q = val.toLowerCase();
+            rows.forEach(r => {
+                if (r.querySelector('td').colSpan > 1) return;
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        function filterClientCatalog() {
+            const q = document.getElementById('clientSearch').value.toLowerCase();
+            const cat = document.getElementById('clientCategory').value;
+            const cards = document.querySelectorAll('.product-card-col');
+            let visible = 0;
+            cards.forEach(card => {
+                const match = (cat === 'all' || card.dataset.category === cat)
+                           && card.querySelector('h5').innerText.toLowerCase().includes(q);
+                card.style.display = match ? '' : 'none';
+                if (match) visible++;
+            });
+            const noMsg = document.getElementById('noProductsMsg');
+            if (noMsg) noMsg.classList.toggle('d-none', visible > 0);
+        }
+    </script>
+}
+
+@section Styles {
+<style>
+    .cc-catalog-bg { background: #FAFAFA; min-height: calc(100vh - 80px); padding-bottom: 5rem; }
+
+    .cc-catalog-hero {
+        background: linear-gradient(180deg, #FFF8F0 0%, #F5E6D3 60%, #FAFAFA 100%);
+        padding: 3rem 0 2.75rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .cc-catalog-hero-dots {
+        position: absolute; inset: 0; pointer-events: none;
+        background-image: radial-gradient(circle, rgba(139,69,19,.12) 1px, transparent 1px);
+        background-size: 28px 28px;
+        mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.4) 40%, transparent 100%);
+        -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,.4) 40%, transparent 100%);
+    }
+    .cc-catalog-title { font-size: 3rem; line-height: 1.15; margin-bottom: .75rem; }
+    .cc-catalog-subtitle { max-width: 500px; margin: 0 auto; line-height: 1.7; }
+
+    .cc-catalog-filter-bar {
+        background: #fff; padding: .75rem; border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.04); border: 1px solid var(--cc-border);
+        display: flex; gap: .75rem; flex-wrap: wrap; align-items: center;
+    }
+    .cc-catalog-search {
+        height: 44px !important; border-radius: 10px !important;
+        min-width: unset !important; width: 100% !important;
+    }
+
+    .cc-product-img-wrap { height: 260px; background: #F5E6D3; position: relative; overflow: hidden; }
+    .cc-product-img { width: 100%; height: 100%; object-fit: cover; }
+    .cc-product-img-placeholder {
+        width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        color: var(--cc-caramel); opacity: .5; font-size: 3rem;
+    }
+    .cc-product-category-badge {
+        position: absolute; top: .75rem; left: .75rem;
+        background: rgba(255,255,255,.9); font-weight: 600; font-size: .75rem;
+        letter-spacing: .5px; border-radius: 8px; padding: .4rem .75rem; backdrop-filter: blur(4px);
+    }
+    .cc-product-body { padding: 1.25rem 1.25rem 1.5rem; display: flex; flex-direction: column; flex: 1; }
+    .cc-product-header { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; margin-bottom: .5rem; }
+    .cc-product-name  { font-size: 1.4rem; margin: 0; }
+    .cc-product-price { font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
+    .cc-product-desc  { font-size: .875rem; line-height: 1.6; flex-grow: 1; margin-bottom: 1rem; }
+    .cc-product-meta  { display: flex; gap: 1.25rem; font-size: .8rem; color: var(--cc-text-muted); margin-bottom: 1rem; padding-bottom: .75rem; border-bottom: 1px dashed var(--cc-border); }
+    .cc-product-btn          { border-radius: 12px !important; padding: .75rem !important; }
+    .cc-product-btn-disabled { background: #F5F5F5 !important; color: #A0A0A0 !important; border: 1px solid #E9ECEF !important; }
+
+    #aiChatToggle {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--cc-primary), var(--cc-caramel));
+    color: #fff;
+    border: none;
+    font-size: 1.35rem;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(139,69,19,.4);
+    transition: transform .2s, box-shadow .2s;
+    z-index: 1040;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#aiChatToggle:hover {
+    transform: scale(1.08);
+    box-shadow: 0 10px 28px rgba(139,69,19,.45);
+}
+#aiChatToggle.open {
+    background: var(--cc-primary-dark);
+}
+
+#aiChatPopup {
+    display: none;
+    position: fixed;
+    bottom: 6rem;
+    right: 2rem;
+    width: 360px;
+    max-height: 520px;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid rgba(139,69,19,.12);
+    box-shadow: 0 16px 48px rgba(139,69,19,.18);
+    z-index: 1039;
+    flex-direction: column;
+    overflow: hidden;
+    animation: chatSlideUp .25s ease;
+}
+#aiChatPopup.visible { display: flex; }
+
+@@keyframes chatSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.ai-chat-header {
+    background: linear-gradient(135deg, #FFF8F0, #F5E6D3);
+    border-bottom: 1px solid rgba(139,69,19,.1);
+    padding: .875rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+.ai-chat-header-info { display: flex; align-items: center; gap: .75rem; }
+.ai-chat-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--cc-primary), var(--cc-caramel));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.ai-chat-name  { font-weight: 600; font-size: .9rem; color: #171717; }
+.ai-chat-status {
+    font-size: .72rem;
+    color: var(--cc-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 1px;
+}
+.ai-chat-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    display: inline-block;
+}
+.ai-chat-close {
+    background: none;
+    border: none;
+    color: var(--cc-text-muted);
+    cursor: pointer;
+    font-size: .9rem;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background .15s, color .15s;
+}
+.ai-chat-close:hover { background: rgba(139,69,19,.1); color: var(--cc-primary); }
+
+.ai-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    background: #FAFAFA;
+}
+.ai-msg { display: flex; }
+.ai-msg--bot  { justify-content: flex-start; }
+.ai-msg--user { justify-content: flex-end; }
+
+.ai-msg-bubble {
+    max-width: 80%;
+    padding: .65rem .9rem;
+    border-radius: 14px;
+    font-size: .875rem;
+    line-height: 1.55;
+}
+.ai-msg--bot .ai-msg-bubble {
+    background: #fff;
+    border: 1px solid var(--cc-border);
+    color: var(--cc-text);
+    border-bottom-left-radius: 4px;
+}
+.ai-msg--user .ai-msg-bubble {
+    background: linear-gradient(135deg, var(--cc-primary), var(--cc-caramel));
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.ai-typing .ai-msg-bubble {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: .65rem .9rem;
+}
+.ai-typing-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--cc-text-muted);
+    animation: typingBounce 1.2s infinite;
+}
+.ai-typing-dot:nth-child(2) { animation-delay: .2s; }
+.ai-typing-dot:nth-child(3) { animation-delay: .4s; }
+@@keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30%           { transform: translateY(-5px); }
+}
+
+.ai-chat-footer {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .75rem 1rem;
+    border-top: 1px solid var(--cc-border);
+    background: #fff;
+    flex-shrink: 0;
+}
+.ai-chat-footer input {
+    flex: 1;
+    border: 1px solid var(--cc-border);
+    border-radius: 50px;
+    padding: .5rem .9rem;
+    font-size: .875rem;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color .18s, box-shadow .18s;
+}
+.ai-chat-footer input:focus {
+    border-color: var(--cc-primary);
+    box-shadow: 0 0 0 3px rgba(139,69,19,.12);
+}
+#aiChatSend {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--cc-primary);
+    color: #fff;
+    font-size: .875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s, transform .15s;
+}
+#aiChatSend:hover     { background: var(--cc-primary-dark); transform: scale(1.05); }
+#aiChatSend:disabled  { background: var(--cc-border); cursor: not-allowed; transform: none; }
+
+@@media (max-width: 480px) {
+    #aiChatPopup { width: calc(100vw - 2rem); right: 1rem; bottom: 5.5rem; }
+    #aiChatToggle { right: 1rem; bottom: 1.5rem; }
+}
+
+.ai-product-list { display: flex; flex-direction: column; gap: 8px; }
+.ai-product-card {
+    display: flex; align-items: center; gap: 10px;
+    background: #fff; border: 1px solid var(--cc-border);
+    border-radius: 10px; padding: 8px 10px;
+}
+.ai-product-img {
+    width: 40px; height: 40px; border-radius: 7px;
+    background-size: cover; background-position: center;
+    flex-shrink: 0;
+}
+.ai-product-img--empty {
+    background: #F5E6D3;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--cc-caramel);
+}
+.ai-product-info { flex: 1; min-width: 0; }
+.ai-product-name { font-size: .82rem; font-weight: 600; color: #171717; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-product-price { font-size: .78rem; color: var(--cc-primary); font-weight: 500; }
+.ai-product-btn {
+    flex-shrink: 0; padding: 5px 10px; border-radius: 8px;
+    background: var(--cc-primary); color: #fff; border: none;
+    font-size: .75rem; font-weight: 500; cursor: pointer;
+    transition: background .15s; white-space: nowrap;
+}
+.ai-product-btn:hover { background: var(--cc-primary-dark); }
+
+.ai-reset-btn {
+    background: none; color: var(--cc-text-muted);
+    border: none; font-size: .78rem; cursor: pointer; padding: .25rem 0;
+    transition: color .15s;
+}
+.ai-reset-btn:hover { color: var(--cc-primary); }
+
+</style>
+}

@@ -1,0 +1,222 @@
+﻿@model CaramelCloud.UI.Models.InstagramThreads.InstagramThreadsPostViewModel
+
+@{
+    ViewData["Title"] = "Публікація в соцмережі";
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="mb-1">Публікація в соцмережі</h2>
+            <p class="text-muted mb-0 small">Опублікуйте пост одразу на кількох платформах</p>
+        </div>
+    </div>
+
+    <form asp-action="Publish" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-4">
+
+            <div class="col-lg-7 d-flex flex-column gap-3">
+
+                <div class="cc-form-card">
+                    <label class="cc-form-label">Зображення продукту</label>
+                    <select asp-for="ImageUrl" asp-items="Model.Products"
+                            class="form-select" id="imageSelect" style="border-radius:10px;">
+                        <option value="">— Оберіть продукт —</option>
+                    </select>
+                    <span asp-validation-for="ImageUrl" class="text-danger small mt-1 d-block"></span>
+
+                    <div id="previewContainer" class="mt-3" style="display:none;">
+                        <img id="imagePreview" src="" alt="Прев'ю"
+                             style="width:auto; max-width:100%; max-height:180px; display:block;
+                                    margin:0 auto; border-radius:12px;
+                                    border:1px solid var(--cc-border); object-fit:contain;"/>
+                    </div>
+                    <div id="previewPlaceholder" class="cc-preview-placeholder mt-3">
+                        <i class="bi bi-image fs-2 text-muted"></i>
+                        <span class="text-muted small mt-2">Оберіть продукт для прев'ю</span>
+                    </div>
+                </div>
+
+                <div class="cc-form-card">
+                    <label class="cc-form-label">Підпис до посту</label>
+                    <textarea asp-for="Caption" class="form-control" rows="5"
+                              id="captionInput"
+                              placeholder="Напишіть підпис... #CaramelCloud"
+                              style="border-radius:12px; resize:none;"></textarea>
+                    <span asp-validation-for="Caption" class="text-danger small mt-1 d-block"></span>
+                    <div class="d-flex justify-content-between mt-1">
+                        <span class="text-muted small">Максимум 2200 символів</span>
+                        <span class="text-muted small" id="charCount">0 / 2200</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-5 d-flex flex-column gap-3">
+
+                <div class="cc-form-card">
+                    <label class="cc-form-label mb-3">Платформи для публікації</label>
+                    <div class="d-flex flex-column gap-2">
+
+                        <label class="cc-platform-check" for="publishToInstagram">
+                            <input class="form-check-input" type="checkbox"
+                                   name="publishToInstagram" id="publishToInstagram"
+                                   value="true" checked />
+                            <span class="cc-platform-icon cc-platform-instagram">
+                                <i class="bi bi-instagram"></i>
+                            </span>
+                            <span class="cc-platform-name">Instagram</span>
+                        </label>
+
+                        <label class="cc-platform-check" for="publishToThreads">
+                            <input class="form-check-input" type="checkbox"
+                                   name="publishToThreads" id="publishToThreads"
+                                   value="true" checked />
+                            <span class="cc-platform-icon cc-platform-threads">
+                                <i class="bi bi-threads"></i>
+                            </span>
+                            <span class="cc-platform-name">Threads</span>
+                        </label>
+
+                        <label class="cc-platform-check" for="publishToFacebook">
+                            <input class="form-check-input" type="checkbox"
+                                   name="publishToFacebook" id="publishToFacebook"
+                                   value="true" checked />
+                            <span class="cc-platform-icon cc-platform-facebook">
+                                <i class="bi bi-facebook"></i>
+                            </span>
+                            <span class="cc-platform-name">Facebook</span>
+                        </label>
+
+                    </div>
+                </div>
+
+                <div class="cc-form-card">
+                    <div class="cc-section-label mb-3">Підсумок</div>
+                    <div class="d-flex flex-column gap-2" id="publishSummary">
+                        <div class="d-flex align-items-center gap-2 text-muted small">
+                            <i class="bi bi-image"></i>
+                            <span id="summaryImage">Зображення не обрано</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 text-muted small">
+                            <i class="bi bi-chat-text"></i>
+                            <span id="summaryCaption">Підпис не заповнено</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 text-muted small">
+                            <i class="bi bi-share"></i>
+                            <span id="summaryPlatforms">3 платформи обрано</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2" style="border-radius:12px;">
+                    <i class="bi bi-send me-2"></i>Опублікувати
+                </button>
+
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+<style>
+    .cc-preview-placeholder {
+        width: 100%;
+        height: 160px;
+        border-radius: 12px;
+        border: 2px dashed var(--cc-border);
+        background: var(--cc-surface);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cc-section-label {
+        font-size: .7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--cc-text-muted);
+    }
+
+    .cc-platform-check {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1.5px solid var(--cc-border);
+        cursor: pointer;
+        transition: border-color .15s, background .15s;
+    }
+    .cc-platform-check:hover { border-color: var(--cc-primary); background: #FFFDFB; }
+    .cc-platform-check:has(input:checked) { border-color: var(--cc-primary); background: #FDF6EE; }
+    .cc-platform-check .form-check-input { margin: 0; flex-shrink: 0; }
+
+    .cc-platform-icon {
+        width: 36px; height: 36px;
+        border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1rem; flex-shrink: 0;
+    }
+    .cc-platform-instagram { background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
+    .cc-platform-threads   { background: #000; }
+    .cc-platform-facebook  { background: #1877F2; }
+
+    .cc-platform-name { font-weight: 600; font-size: .95rem; flex: 1; }
+</style>
+}
+
+@section Scripts {
+    <script>
+        const imageSelect    = document.getElementById('imageSelect');
+        const imagePreview   = document.getElementById('imagePreview');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewPlaceholder = document.getElementById('previewPlaceholder');
+        const captionInput   = document.getElementById('captionInput');
+        const charCount      = document.getElementById('charCount');
+        const summaryImage   = document.getElementById('summaryImage');
+        const summaryCaption = document.getElementById('summaryCaption');
+        const summaryPlatforms = document.getElementById('summaryPlatforms');
+
+        imageSelect.addEventListener('change', function () {
+            const url = this.value;
+            const name = this.options[this.selectedIndex].text;
+            if (url) {
+                imagePreview.src = url;
+                previewContainer.style.display = 'block';
+                previewPlaceholder.style.display = 'none';
+                summaryImage.textContent = name;
+            } else {
+                previewContainer.style.display = 'none';
+                previewPlaceholder.style.display = 'flex';
+                summaryImage.textContent = 'Зображення не обрано';
+            }
+        });
+
+        captionInput.addEventListener('input', function () {
+            const len = this.value.length;
+            charCount.textContent = `${len} / 2200`;
+            summaryCaption.textContent = len > 0
+                ? `${len} символів введено`
+                : 'Підпис не заповнено';
+        });
+
+        function updatePlatformSummary() {
+            const checked = document.querySelectorAll(
+                '#publishToInstagram:checked, #publishToThreads:checked, #publishToFacebook:checked'
+            ).length;
+            summaryPlatforms.textContent = checked > 0
+                ? `${checked} платформ${checked === 1 ? 'у' : 'и'} обрано`
+                : 'Платформи не обрано';
+        }
+
+        document.querySelectorAll('#publishToInstagram, #publishToThreads, #publishToFacebook')
+            .forEach(cb => cb.addEventListener('change', updatePlatformSummary));
+    </script>
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

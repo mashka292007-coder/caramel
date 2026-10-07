@@ -1,0 +1,439 @@
+﻿@model CaramelCloud.UI.Models.Order.CreateClientOrderViewModel
+@{
+    ViewData["Title"] = "Оформлення замовлення";
+    var images = ViewBag.ItemImages as Dictionary<int, string> ?? new();
+    var total = Model.Items
+        .Where(i => i.ProductId.HasValue)
+        .Sum(i => i.UnitPrice * i.Quantity);
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="mb-1">Оформлення замовлення</h2>
+            <p class="text-muted mb-0 small">Перевірте товари та заповніть деталі доставки</p>
+        </div>
+        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-cc px-4">
+            <i class="bi bi-arrow-left me-2"></i>До кошика
+        </a>
+    </div>
+
+    <form method="post" id="orderForm">
+        @Html.AntiForgeryToken()
+
+        @for (int i = 0; i < Model.Items.Count; i++)
+        {
+            <input type="hidden" name="Items[@i].ProductId"   value="@Model.Items[i].ProductId" />
+            <input type="hidden" name="Items[@i].Quantity"    value="@Model.Items[i].Quantity" />
+            <input type="hidden" name="Items[@i].ProductName" value="@Model.Items[i].ProductName" />
+            <input type="hidden" name="Items[@i].UnitPrice"   value="@Model.Items[i].UnitPrice" />
+        }
+        <input type="hidden" name="DeliveryCost" id="deliveryCostInput" value="0" />
+
+        <div class="row g-4">
+            <div class="col-lg-8 d-flex flex-column gap-4">
+
+                <div class="cc-table-wrapper">
+                    <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+                        <span class="fw-semibold cc-serif" style="font-size:1.1rem;">
+                            <i class="bi bi-bag-heart me-2 text-cc-primary"></i>Ваше замовлення
+                        </span>
+                        <span class="text-muted small">@Model.Items.Sum(i => i.Quantity) поз.</span>
+                    </div>
+
+                    @if (!Model.Items.Any(i => i.ProductId.HasValue))
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-cart-x fs-2 d-block mb-2"></i>
+                            Ваш кошик порожній.
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Items.Where(i => i.ProductId.HasValue))
+                        {
+                            var imgUrl = item.ProductId.HasValue && images.ContainsKey(item.ProductId.Value)
+                                         ? images[item.ProductId.Value] : "";
+                            <div class="cc-order-item-row">
+                                <div class="cc-cart-img" style="width:64px; height:64px; border-radius:12px;">
+                                    @if (!string.IsNullOrEmpty(imgUrl))
+                                    {
+                                        <img src="@imgUrl" alt="@item.ProductName" />
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-image" style="color:#BDBDBD; font-size:1.2rem;"></i>
+                                    }
+                                </div>
+                                <div style="flex:1; min-width:0;">
+                                    <div class="fw-semibold text-dark" style="font-size:.92rem;">@item.ProductName</div>
+                                    <div class="text-muted" style="font-size:.78rem; margin-top:.15rem;">
+                                        @item.UnitPrice.ToString("N0") ₴ × @item.Quantity шт.
+                                    </div>
+                                </div>
+                                <div class="fw-bold text-cc-primary" style="font-size:.95rem; white-space:nowrap;">
+                                    @((item.UnitPrice * item.Quantity).ToString("N0")) ₴
+                                </div>
+                            </div>
+                        }
+                        <div class="d-flex justify-content-between align-items-center px-4 py-3"
+                             style="background: var(--cc-table-head-bg); border-top: 1px solid var(--cc-table-head-border);">
+                            <span class="text-muted" style="font-size:.95rem;">Всього товарів: @Model.Items.Sum(i => i.Quantity) шт.</span>
+                            <span class="cc-serif fw-bold text-cc-primary" style="font-size:1.4rem;">
+                                @total.ToString("N0") ₴
+                            </span>
+                       </div>
+                    }
+                </div>
+
+                <div class="cc-form-card">
+                    <div class="cc-section-label mb-4">
+                        <i class="bi bi-truck me-2 text-cc-primary"></i>Доставка та оплата
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <label class="cc-form-label">Тип доставки</label>
+                            <div class="d-flex gap-3">
+                                <label style="flex:1; cursor:pointer;">
+                                    <input type="radio" name="deliveryType" value="pickup" id="radioPickup"
+                                           class="d-none" checked onchange="handleDeliveryType('pickup')" />
+                                    <div class="cc-delivery-card active" id="optPickup">
+                                        <i class="bi bi-house-door mb-2"></i>
+                                        <div class="cc-delivery-card-title">Самовивіз</div>
+                                        <div class="cc-delivery-card-sub">Безкоштовно</div>
+                                    </div>
+                                </label>
+                                <label style="flex:1; cursor:pointer;">
+                                    <input type="radio" name="deliveryType" value="courier" id="radioCourier"
+                                           class="d-none" onchange="handleDeliveryType('courier')" />
+                                    <div class="cc-delivery-card" id="optCourier">
+                                        <i class="bi bi-truck mb-2"></i>
+                                        <div class="cc-delivery-card-title">Кур'єр</div>
+                                        <div class="cc-delivery-card-sub">Острог та район</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <select asp-for="DeliveryMethodId" id="deliveryMethodSelect" class="d-none">
+                                @foreach (var m in Model.DeliveryMethods)
+                                {
+                                    <option value="@m.Value">@m.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-12" id="courierBlock" style="display:none;">
+                            <div class="cc-status-box">
+                                <div id="mapContainer" style="display:none; margin-bottom:1.5rem;">
+                                    <div id="map" style="height:380px; border-radius:12px; border:1px solid rgba(139,69,19,.15); overflow:hidden;"></div>
+                                    <div id="routeInfo" class="mt-2 p-2 text-center d-flex justify-content-around"
+                                         style="background:#fff; border-radius:8px; font-size:.85rem; border:1px solid var(--cc-border);">
+                                        <span><i class="bi bi-compass me-1 text-cc-primary"></i><span id="distVal" class="fw-bold">—</span> км</span>
+                                        <span><i class="bi bi-clock-history me-1 text-cc-primary"></i><span id="durVal" class="fw-bold">—</span> хв</span>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-7">
+                                        <label class="cc-form-label">Адреса доставки</label>
+                                        @if (Model.DeliveryAddresses.Any())
+                                        {
+                                            <select asp-for="DeliveryAddressId" asp-items="Model.DeliveryAddresses"
+                                                    id="savedAddressSelect" onchange="handleAddressSelect(this)"
+                                                    class="form-select mb-2" style="border-radius:10px;">
+                                                <option value="">— Оберіть збережену або введіть нову —</option>
+                                            </select>
+                                        }
+                                        <input type="text" name="DeliveryAddressCustom" id="deliveryAddressInput"
+                                               placeholder="Вулиця, будинок, місто"
+                                               class="form-control" style="border-radius:10px;" />
+                                        <div id="apiStatus" class="small mt-1" style="display:none;"></div>
+                                    </div>
+                                    <div class="col-md-5 d-flex align-items-end">
+                                        <button type="button" id="btnCalculateAPI" class="btn btn-primary w-100"
+                                                style="border-radius:10px; padding:.65rem 1rem;">
+                                            <i class="bi bi-calculator-fill me-2"></i>Розрахувати
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="costResultBlock" style="display:none; border-top:1px dashed rgba(139,69,19,.3); padding-top:1rem;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted" style="font-size:.9rem;">Вартість кур'єрської доставки:</span>
+                                        <span class="fw-bold text-cc-primary" style="font-size:1.1rem;" id="calculatedCostLabel">0 ₴</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="PaymentMethodId" class="cc-form-label">Спосіб оплати</label>
+                            <select asp-for="PaymentMethodId" asp-items="Model.PaymentMethods"
+                                    class="form-select" style="border-radius:10px;">
+                                <option value="">— Оберіть спосіб —</option>
+                            </select>
+                            <span asp-validation-for="PaymentMethodId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DeliveryDate" class="cc-form-label">Дата та час</label>
+                            <input asp-for="DeliveryDate" type="datetime-local"
+                                   class="form-control" style="border-radius:10px;" />
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Comment" class="cc-form-label">Коментар</label>
+                            <textarea asp-for="Comment" class="form-control" rows="2"
+                                      style="border-radius:10px; resize:none;"
+                                      placeholder="Напишіть ваші побажання..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-4">
+                <div class="cc-form-card cc-sticky-side">
+                    <div class="cc-section-label mb-4">Підсумок</div>
+
+                    <div id="deliverySummaryRow" style="display:none; justify-content:space-between;" class="mb-2">
+                        <span class="text-muted" style="font-size:.8375rem;">Товари:</span>
+                        <span class="fw-500 text-dark" style="font-size:.8375rem;">@total.ToString("N0") ₴</span>
+                    </div>
+                    <div id="deliverySummaryItem" style="display:none; justify-content:space-between;" class="mb-3">
+                        <span class="text-muted" style="font-size:.8375rem;">Доставка:</span>
+                        <span id="deliverySummaryAmt" class="fw-500 text-dark" style="font-size:.8375rem;">0 ₴</span>
+                    </div>
+
+                    <div style="height:1px; background:rgba(139,69,19,.12); margin-bottom:1.25rem;"></div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-semibold text-dark">Разом:</span>
+                        <span id="grandTotal" class="cc-serif text-cc-primary" style="font-size:1.75rem; font-weight:600;">
+                            @total.ToString("N0") ₴
+                        </span>
+                    </div>
+
+                    <button type="submit" id="btnSubmitOrder"
+                            class="btn btn-primary w-100 py-3"
+                            style="border-radius:12px; font-size:.9375rem;"
+                            @(Model.Items.Any(i => i.ProductId.HasValue) ? "" : "disabled")
+                            onclick="submitOrder(event)">
+                        <i class="bi bi-check2-circle me-2"></i>Підтвердити замовлення
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+<style>
+    .cc-order-item-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 14px 20px;
+        border-bottom: 1px solid #F5EEE8;
+        transition: background .12s;
+    }
+    .cc-order-item-row:last-of-type { border-bottom: none; }
+    .cc-order-item-row:hover { background: #FFFDFB; }
+
+    .cc-cart-img {
+        border-radius: 12px;
+        border: 1px solid var(--cc-border);
+        background: #F5F5F5;
+        overflow: hidden;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cc-cart-img img { width: 100%; height: 100%; object-fit: cover; }
+
+    .cc-section-label {
+        font-size: .7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--cc-text-muted);
+    }
+
+    .cc-delivery-card {
+        border: 2px solid var(--cc-border);
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        transition: all .2s ease;
+    }
+    .cc-delivery-card i { font-size: 1.5rem; color: var(--cc-text-muted); display: block; }
+    .cc-delivery-card-title { font-weight: 600; color: #171717; font-size: .9rem; }
+    .cc-delivery-card-sub   { font-size: .75rem; color: var(--cc-text-muted); }
+
+    .cc-delivery-card.active {
+        border-color: var(--cc-primary);
+        background: #FFF8F0;
+    }
+    .cc-delivery-card.active i { color: var(--cc-primary); }
+
+    label:focus-within .cc-delivery-card {
+        outline: none;
+        box-shadow: 0 0 0 .25rem rgba(139,69,19,.25);
+        border-color: var(--cc-primary);
+    }
+
+    .btn:active {
+        outline: none !important;
+        box-shadow: 0 0 0 .25rem rgba(139,69,19,.25) !important;
+    }
+
+    .btn-primary:disabled,
+    .btn-primary.disabled {
+        background-color: var(--cc-primary-light) !important;
+        border-color: var(--cc-primary-light) !important;
+        color: rgba(255,255,255,.7) !important;
+        opacity: .8 !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+</style>
+}
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script>
+        const itemsTotal = @total.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        let map, routingControl;
+        const shopLat = 50.3280, shopLon = 26.5148;
+
+        function submitOrder(e) {
+            const btn = document.getElementById('btnSubmitOrder');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Оформлюємо...';
+            document.getElementById('orderForm').submit();
+        }
+
+        function handleDeliveryType(type) {
+            const courierBlock  = document.getElementById('courierBlock');
+            const summaryRow    = document.getElementById('deliverySummaryRow');
+            const summaryItem   = document.getElementById('deliverySummaryItem');
+            const optPickup     = document.getElementById('optPickup');
+            const optCourier    = document.getElementById('optCourier');
+
+            if (type === 'courier') {
+                courierBlock.style.display = 'block';
+                summaryRow.style.display = 'flex';
+                summaryItem.style.display = 'flex';
+                document.getElementById('deliveryMethodSelect').value = "@Model.DeliveryMethods.LastOrDefault()?.Value";
+                optCourier.classList.add('active');
+                optPickup.classList.remove('active');
+            } else {
+                courierBlock.style.display = 'none';
+                summaryRow.style.display = 'none';
+                summaryItem.style.display = 'none';
+                document.getElementById('deliveryMethodSelect').value = "@Model.DeliveryMethods.FirstOrDefault()?.Value";
+                updateDeliveryCost(0);
+                optPickup.classList.add('active');
+                optCourier.classList.remove('active');
+            }
+        }
+
+        function showMapWithRoute(clientLat, clientLon) {
+            document.getElementById('mapContainer').style.display = 'block';
+            const midLat = (shopLat + clientLat) / 2;
+            const midLon = (shopLon + clientLon) / 2;
+            if (!map) {
+                map = L.map('map').setView([midLat, midLon], 10);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+            }
+            if (routingControl) map.removeControl(routingControl);
+            const dotStyle = (color) => `<div style="background:${color};width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>`;
+            const shopIcon   = L.divIcon({ className:'', html: dotStyle('#8B4513'), iconAnchor:[7,7] });
+            const clientIcon = L.divIcon({ className:'', html: dotStyle('#c0392b'), iconAnchor:[7,7] });
+            if (map._shopMarker)   map.removeLayer(map._shopMarker);
+            if (map._clientMarker) map.removeLayer(map._clientMarker);
+            map._shopMarker   = L.marker([shopLat, shopLon], { icon: shopIcon }).addTo(map)
+                .bindPopup('<b>CaramelCloud</b><br>м. Острог, просп. Незалежності 60', { autoClose:false, closeOnClick:false }).openPopup();
+            map._clientMarker = L.marker([clientLat, clientLon], { icon: clientIcon }).addTo(map)
+                .bindPopup('<b> Адреса доставки</b>', { autoClose:false, closeOnClick:false }).openPopup();
+            routingControl = L.Routing.control({
+                waypoints: [L.latLng(shopLat, shopLon), L.latLng(clientLat, clientLon)],
+                routeWhileDragging: false, addWaypoints: false, draggableWaypoints: false,
+                fitSelectedRoutes: true, show: false,
+                createMarker: () => null,
+                lineOptions: { styles: [{ color:'#c0392b', weight:5, opacity:.85 }] },
+                router: L.Routing.osrmv1({ serviceUrl:'https://router.project-osrm.org/route/v1' })
+            }).addTo(map);
+            routingControl.on('routesfound', (e) => {
+                const s = e.routes[0].summary;
+                document.getElementById('distVal').textContent = (s.totalDistance / 1000).toFixed(1);
+                document.getElementById('durVal').textContent  = Math.round(s.totalTime / 60);
+            });
+            setTimeout(() => map.invalidateSize(), 300);
+        }
+
+        async function calculateDelivery() {
+            const addressInput = document.getElementById('deliveryAddressInput');
+            const address = addressInput.value;
+            const status  = document.getElementById('apiStatus');
+            const btn     = document.getElementById('btnCalculateAPI');
+            if (address.length < 5) { alert('Введіть точну адресу'); return; }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            status.style.display = 'block';
+            status.innerHTML = 'Розрахунок...';
+            const formData = new FormData();
+            formData.append('address', address);
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            try {
+                const response = await fetch('/DeliveryCalculator/CalculateJson', {
+                    method:'POST', headers:{ 'RequestVerificationToken': token }, body: formData
+                });
+                const data = await response.json();
+                if (data.addressFound && data.routeFound) {
+                    updateDeliveryCost(data.estimatedDeliveryCost);
+                    addressInput.value = data.foundDisplayName;
+                    document.querySelector('input[name="DeliveryAddressCustom"]').value = data.foundDisplayName;
+                    document.getElementById('costResultBlock').style.display = 'block';
+                    document.getElementById('calculatedCostLabel').textContent = data.formattedCost;
+                    status.innerHTML = '<i class="bi bi-check-circle text-success"></i> Готово';
+                    showMapWithRoute(data.clientLat, data.clientLon);
+                } else {
+                    status.innerHTML = '<span class="text-danger">Адресу не знайдено</span>';
+                }
+            } catch { status.innerHTML = 'Помилка'; }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-calculator-fill me-2"></i>Розрахувати';
+            }
+        }
+
+        function updateDeliveryCost(val) {
+            const cost = parseFloat(val) || 0;
+            document.getElementById('deliveryCostInput').value = cost.toFixed(2);
+            document.getElementById('deliverySummaryAmt').textContent = cost.toFixed(0) + ' ₴';
+            const grand = itemsTotal + cost;
+            document.getElementById('grandTotal').textContent =
+                grand.toLocaleString('uk-UA', { minimumFractionDigits:0 }) + ' ₴';
+        }
+
+        function handleAddressSelect(select) {
+            if (select.value !== '') {
+                const text = select.options[select.selectedIndex].text;
+                document.getElementById('deliveryAddressInput').value = text;
+                document.querySelector('input[name="DeliveryAddressCustom"]').value = text;
+            }
+        }
+
+        document.getElementById('btnCalculateAPI').addEventListener('click', calculateDelivery);
+    </script>
+}

@@ -1,0 +1,94 @@
+﻿@model dynamic
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+            Назва <span class="text-danger">*</span>
+        </label>
+        <input name="Name" value="@Model?.Name" required class="form-control"
+               style="border-radius:12px;padding:.85rem 1rem;"
+               placeholder="Наприклад: Ванільний бісквіт" />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+            Доплата, ₴ <span class="text-danger">*</span>
+        </label>
+        <div class="input-group">
+            <input name="ExtraPrice" type="number" step="0.01" min="0"
+                   value="@Model?.ExtraPrice" required class="form-control"
+                   style="border-radius:12px 0 0 12px;padding:.85rem 1rem;"
+                   placeholder="0.00" />
+            <span class="input-group-text cc-input-addon" style="border-radius:0 12px 12px 0;">₴</span>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+            Прив'язати рецепт
+        </label>
+        <select name="RecipeId" class="form-select" style="border-radius:12px;padding:.85rem 1rem;">
+            <option value="">— Без рецепта —</option>
+            @foreach (var r in (ViewBag.Recipes as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new()))
+            {
+                <option value="@r.Value" selected="@(r.Value == Model?.RecipeId?.ToString())">@r.Text</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+            Опис
+        </label>
+        <textarea name="Description" class="form-control" rows="3"
+                  style="border-radius:12px;padding:.85rem 1rem;resize:none;"
+                  placeholder="Необов'язково — буде показано клієнту в конструкторі">@Model?.Description</textarea>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">Фото</label>
+        <div class="upload-area position-relative" style="background:#FAFAFA; cursor:pointer;">
+            <input type="file" name="image" accept="image/*" class="file-input" onchange="previewImage(this)" title="Оберіть фото" />
+            
+            @{
+                string imageUrl = Model != null && Model.GetType().GetProperty("ImageUrl") != null ? Model.ImageUrl : null;
+            }
+
+            @if (!string.IsNullOrEmpty(imageUrl))
+            {
+                <div id="uploadPlaceholder" style="display:none;">
+                    <i class="bi bi-cloud-arrow-up" style="font-size:2rem; color:#8B4513; opacity:0.7;"></i>
+                    <div class="mt-2" style="font-size:0.95rem; font-weight:500; color:#4A4A4A;">Натисніть або перетягніть нове фото сюди</div>
+                    <div style="font-size:0.75rem; color:#888; margin-top:0.25rem;">Формати: JPG, PNG (бажано 1:1)</div>
+                </div>
+                <div id="imagePreviewContainer" style="display:flex; align-items:center; justify-content:center; gap:1.5rem;">
+                    <img id="imagePreview" src="@imageUrl" alt="Preview" style="max-height:100px; border-radius:10px; border:1px solid #EAEAEA;" />
+                    <span style="font-size:0.9rem; color:#8B4513; font-weight:600; text-decoration:underline;">Замінити фото</span>
+                </div>
+            }
+            else
+            {
+                <div id="uploadPlaceholder">
+                    <i class="bi bi-cloud-arrow-up" style="font-size:2rem; color:#8B4513; opacity:0.7;"></i>
+                    <div class="mt-2" style="font-size:0.95rem; font-weight:500; color:#4A4A4A;">Натисніть або перетягніть фото сюди</div>
+                    <div style="font-size:0.75rem; color:#888; margin-top:0.25rem;">Формати: JPG, PNG (бажано 1:1)</div>
+                </div>
+                <div id="imagePreviewContainer" style="display:none; align-items:center; justify-content:center; gap:1.5rem;">
+                    <img id="imagePreview" src="" alt="Preview" style="max-height:100px; border-radius:10px; border:1px solid #EAEAEA;" />
+                    <span style="font-size:0.9rem; color:#8B4513; font-weight:600; text-decoration:underline;">Змінити фото</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="form-check mt-2" style="background:#FAFAFA; padding:1.2rem 1.2rem 1.2rem 3rem; border-radius:12px; border:1px solid #EAEAEA;">
+            <input type="checkbox" name="IsAvailable" value="true" class="form-check-input"
+                   id="isAvail" checked="@(Model == null || Model.IsAvailable == true)" style="margin-top:0.15rem; transform:scale(1.25);" />
+            <input type="hidden" name="IsAvailable" value="false" />
+            <label class="form-check-label fw-semibold" for="isAvail" style="color:#2C1A0E; margin-left:0.35rem; font-size:1rem;">
+                Показувати в конструкторі торта
+            </label>
+        </div>
+    </div>
+</div>

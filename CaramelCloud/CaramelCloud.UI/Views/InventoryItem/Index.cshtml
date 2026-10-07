@@ -1,0 +1,138 @@
+﻿@using CaramelCloud.UI.Models.InventoryItem
+@model IEnumerable<InventoryItemViewModel>
+
+@{
+    ViewData["Title"] = "Склад";
+    int totalCount   = Model.Count();
+    int criticalCount = Model.Count(i => i.IsCritical);
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Склад</h2>
+            <p class="text-muted mb-0 small">Управління залишками інгредієнтів</p>
+        </div>
+        <a asp-controller="InventoryItem" asp-action="Create" class="btn btn-primary px-4">
+            <i class="bi bi-plus-lg me-2"></i>Додати позицію
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-auto">
+            <div class="cc-stat-card">
+                <div class="cc-stat-icon"><i class="bi bi-box-seam"></i></div>
+                <div>
+                    <div class="cc-stat-value">@totalCount</div>
+                    <div class="cc-stat-label">Всього позицій</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Any(i => i.IsCritical))
+    {
+        <div class="alert cc-alert-danger d-flex align-items-center gap-3 rounded-3 mb-4">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div>
+                <div class="fw-semibold">Критичний залишок: @criticalCount позицій</div>
+                <div class="small">Позначені червоним — поповніть запаси якнайшвидше</div>
+            </div>
+        </div>
+    }
+
+    <div class="cc-table-wrapper">
+        <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+            <span class="fw-semibold cc-serif" style="font-size:1.1rem;">Список інгредієнтів</span>
+            <div class="cc-search-wrapper">
+                <i class="bi bi-search cc-search-icon"></i>
+                <input type="text" class="form-control cc-search-input"
+                       placeholder="Пошук за назвою..." onkeyup="filterTable(this.value)">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table cc-table align-middle mb-0" id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>Назва</th>
+                        <th style="width:130px;">Кількість</th>
+                        <th style="width:110px;">Одиниця</th>
+                        <th style="width:140px;">Мін. кількість</th>
+                        <th style="width:160px;">Оновлено</th>
+                        <th class="text-end" style="width:160px;">Дії</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr class="@(item.IsCritical ? "cc-row-critical" : "")">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="cc-status-dot @(item.IsCritical ? "cc-status-dot--critical" : "cc-status-dot--ok")"></span>
+                                    <span class="fw-semibold text-dark">@item.ItemName</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-bold @(item.IsCritical ? "text-danger" : "text-success")">
+                                    @item.Quantity.ToString("0.###")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="cc-badge cc-badge-source-admin">@item.Unit</span>
+                            </td>
+                            <td class="text-muted">@item.MinQuantity.ToString("0.###")</td>
+                            <td class="text-muted" style="font-size:.85rem;">
+                                @item.LastUpdated.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a asp-action="Edit"   asp-route-id="@item.Id" class="cc-btn-table edit">Редагувати</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="cc-btn-table delete">Видалити</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-box-seam fs-2 d-block mb-2" style="color:var(--cc-border);"></i>
+                                <span class="cc-serif" style="font-size:1.1rem; color:#171717; display:block; margin-bottom:.25rem;">Склад порожній</span>
+                                Натисніть «Додати позицію», щоб внести перший інгредієнт
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable(val) {
+            const rows = document.querySelectorAll('#inventoryTable tbody tr');
+            const q = val.toLowerCase();
+            rows.forEach(r => {
+                if (r.querySelector('td')?.colSpan > 1) return;
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+}
+
+@section Styles {
+<style>
+    .cc-row-critical td { background: rgba(220,53,69,.03) !important; }
+    .cc-row-critical:hover td { background: rgba(220,53,69,.07) !important; }
+
+    .cc-status-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        flex-shrink: 0; display: inline-block;
+    }
+    .cc-status-dot--ok       { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.15); }
+    .cc-status-dot--critical { background: #dc3545; box-shadow: 0 0 0 3px rgba(220,53,69,.15); }
+</style>
+}

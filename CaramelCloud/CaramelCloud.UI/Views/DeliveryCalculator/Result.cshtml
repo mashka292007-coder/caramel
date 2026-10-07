@@ -1,0 +1,195 @@
+﻿@model CaramelCloud.UI.Models.Delivery.DeliveryResultViewModel
+@{
+    ViewData["Title"] = "Результат розрахунку доставки";
+    bool fromOrder = Context.Request.Query.ContainsKey("fromOrder") ||
+                     Context.Request.Headers["Referer"].ToString().Contains("PlaceOrder");
+}
+
+<div class="container py-5" style="max-width:760px;">
+    <div class="text-center mb-4">
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:#171717;">
+            Результат розрахунку
+        </h2>
+        <p class="text-muted" style="font-size:.88rem;">
+            <i class="bi bi-geo-alt me-1"></i>@Model.InputAddress
+        </p>
+    </div>
+
+    @if (!Model.HasResult)
+    {
+        <div style="background:#fff3cd;border-radius:1rem;border:1px solid #ffc107;padding:2rem;text-align:center;">
+            <i class="bi bi-exclamation-triangle" style="font-size:2.5rem;color:#856404;"></i>
+            <h5 class="mt-3" style="color:#856404;">Адресу не знайдено</h5>
+            <p style="color:#664d03;">@Model.FallbackMessage</p>
+            <a asp-action="Index" class="btn btn-warning mt-2">
+                <i class="bi bi-arrow-left me-1"></i>Спробувати ще раз
+            </a>
+        </div>
+    }
+    else
+    {
+        <div style="background:linear-gradient(135deg,#FFF8F0,#F5E6D3);border-radius:1.25rem;
+            border:1px solid rgba(139,69,19,.12);padding:1.5rem 2rem;margin-bottom:1.5rem;">
+            <div class="d-flex align-items-start gap-3">
+                <div style="flex:1;">
+                    <div style="font-size:.75rem;color:#8B4513;font-weight:700;text-transform:uppercase;letter-spacing:.07em;">Від</div>
+                    <div style="font-weight:600;color:#171717;">@Model.ShopAddress</div>
+                </div>
+                <i class="bi bi-arrow-right" style="font-size:1.4rem;color:#8B4513;margin-top:1rem;"></i>
+                <div style="flex:1;text-align:right;">
+                    <div style="font-size:.75rem;color:#8B4513;font-weight:700;text-transform:uppercase;letter-spacing:.07em;">До</div>
+                    <div style="font-weight:600;color:#171717;font-size:.9rem;">
+                        @(Model.FoundDisplayName?.Split(',').Take(3).Aggregate((a, b) => a + "," + b) ?? Model.InputAddress)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.RouteFound)
+        {
+            <div class="row g-3 mb-4">
+                <div class="col-4">
+                    <div style="background:#fff;border-radius:1rem;border:1px solid rgba(139,69,19,.1);padding:1.25rem;text-align:center;">
+                        <i class="bi bi-rulers" style="font-size:1.5rem;color:#8B4513;"></i>
+                        <div style="font-size:1.5rem;font-weight:700;color:#171717;margin:.5rem 0 .2rem;">@Model.FormattedDistance</div>
+                        <div style="font-size:.75rem;color:#6B6B6B;text-transform:uppercase;">Відстань</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div style="background:#fff;border-radius:1rem;border:1px solid rgba(139,69,19,.1);padding:1.25rem;text-align:center;">
+                        <i class="bi bi-clock" style="font-size:1.5rem;color:#8B4513;"></i>
+                        <div style="font-size:1.5rem;font-weight:700;color:#171717;margin:.5rem 0 .2rem;">@Model.FormattedDuration</div>
+                        <div style="font-size:.75rem;color:#6B6B6B;text-transform:uppercase;">Час у дорозі</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div style="background:linear-gradient(135deg,#8B4513,#A0522D);border-radius:1rem;padding:1.25rem;text-align:center;">
+                        <i class="bi bi-wallet2" style="font-size:1.5rem;color:#fff;"></i>
+                        <div style="font-size:1.5rem;font-weight:700;color:#fff;margin:.5rem 0 .2rem;">@Model.FormattedCost</div>
+                        <div style="font-size:.75rem;color:rgba(255,255,255,.8);text-transform:uppercase;">Доставка</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background:#d4edda;border-radius:.75rem;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+                <small style="color:#155724;">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Маршрут через OpenRouteService. Вартість орієнтовна.
+                </small>
+            </div>
+        }
+        else
+        {
+            <div style="background:#fff3cd;border-radius:.75rem;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+                <i class="bi bi-exclamation-triangle me-1" style="color:#856404;"></i>
+                <small style="color:#664d03;">@Model.FallbackMessage</small>
+            </div>
+        }
+
+        @if (Model.ClientLat.HasValue && Model.ClientLon.HasValue)
+        {
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+            <div id="map" style="height:380px;border-radius:1rem;margin-bottom:1.5rem;
+            border:1px solid rgba(139,69,19,.15);overflow:hidden;"></div>
+
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+            <script>
+                (function () {
+                var shopLat   = @Model.ShopLat.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var shopLon   = @Model.ShopLon.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var clientLat = @Model.ClientLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var clientLon = @Model.ClientLon.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                var midLat = (shopLat + clientLat) / 2;
+                var midLon = (shopLon + clientLon) / 2;
+
+                var map = L.map('map').setView([midLat, midLon], 10);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+
+                var shopIcon = L.divIcon({
+                className: '',
+                html: '<div style="background:#8B4513;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>',
+                iconAnchor: [7, 7]
+                });
+                var clientIcon = L.divIcon({
+                className: '',
+                html: '<div style="background:#c0392b;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>',
+                iconAnchor: [7, 7]
+                });
+
+                L.marker([shopLat, shopLon], { icon: shopIcon })
+                .addTo(map)
+                .bindPopup('<b><i class="bi bi-shop me-1"></i> CaramelCloud</b><br>м. Острог, просп. Незалежності 60')
+                .openPopup();
+
+                L.marker([clientLat, clientLon], { icon: clientIcon })
+                .addTo(map)
+                .bindPopup('<b><i class="bi bi-geo-alt-fill me-1"></i> Адреса доставки</b><br>@Html.Raw(Model.FoundDisplayName?.Split(',').FirstOrDefault() ?? Model.InputAddress)');
+
+                L.Routing.control({
+                waypoints: [
+                L.latLng(shopLat, shopLon),
+                L.latLng(clientLat, clientLon)
+                ],
+                routeWhileDragging:    false,
+                addWaypoints:          false,
+                draggableWaypoints:    false,
+                fitSelectedRoutes:     true,
+                show:                  false,
+                createMarker:          function () { return null; },
+                lineOptions: { styles: [{ color: '#c0392b', weight: 5, opacity: 0.85 }] },
+                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' })
+                }).addTo(map);
+                })();
+            </script>
+        }
+    }
+
+    
+    <div class="d-flex gap-3 justify-content-center flex-wrap mt-3">
+
+        <a asp-action="Index" asp-route-address="@Model.InputAddress"
+               class="btn px-4"
+               style="background:#6B6B6B;color:#fff;border:none;border-radius:.75rem;font-weight:600;display:flex;align-items:center;">
+            <i class="bi bi-arrow-left me-2"></i>Змінити адресу
+        </a>
+
+        @if (Model.HasResult && Model.RouteFound)
+        {
+            
+            <button onclick="saveAndReturn(event)" class="btn px-4"
+                    style="background:#8B4513;color:#fff;border:none;
+                border-radius:.75rem;font-weight:600;">
+                <i class="bi bi-floppy me-2"></i>Зберегти та оформити замовлення
+            </button>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+
+        function saveAndReturn(event) {
+        const data = {
+        cost:    @(Model.EstimatedDeliveryCost?.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) ?? "0"),
+        address: '@Html.Raw((Model.FoundDisplayName ?? Model.InputAddress).Replace("'", "\\'"))'
+        };
+
+        localStorage.setItem('cc_delivery', JSON.stringify(data));
+
+        const btn = event.currentTarget;
+        btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Збережено!';
+        btn.style.background = '#15803d';
+
+        setTimeout(() => {
+        window.location.href = '/Order/PlaceOrder';
+        }, 700);
+        }
+    </script>
+}

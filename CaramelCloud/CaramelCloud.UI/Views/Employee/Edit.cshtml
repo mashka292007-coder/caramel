@@ -1,0 +1,105 @@
+﻿@using CaramelCloud.UI.Models.Employee
+@model EmployeeViewModel
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif; font-size:2rem; color:#171717; margin:0;">
+                Редагування працівника
+            </h2>
+            <p style="color:#6B6B6B; font-size:.875rem; margin:.25rem 0 0;">
+                Змініть необхідні дані та збережіть
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-primary px-4" style="border-radius:8px; font-size:.9rem;">
+            <i class="bi bi-arrow-left me-2"></i>Назад до списку
+        </a>
+    </div>
+
+    <div class="cc-form-card">
+        <form method="post">
+            <input asp-for="Id" type="hidden" />
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="FirstName" class="form-label fw-bold small text-uppercase"
+                           style="letter-spacing:1px; color:#6B6B6B;">Ім'я</label>
+                    <input asp-for="FirstName" class="form-control"
+                           style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                    <span asp-validation-for="FirstName" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="LastName" class="form-label fw-bold small text-uppercase"
+                           style="letter-spacing:1px; color:#6B6B6B;">Прізвище</label>
+                    <input asp-for="LastName" class="form-control"
+                           style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                    <span asp-validation-for="LastName" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="Phone" class="form-label fw-bold small text-uppercase"
+                           style="letter-spacing:1px; color:#6B6B6B;">Телефон</label>
+                    <input asp-for="Phone" class="form-control"
+                           style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                    <span asp-validation-for="Phone" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="PositionId" class="form-label fw-bold small text-uppercase"
+                           style="letter-spacing:1px; color:#6B6B6B;">Посада</label>
+                    <select asp-for="PositionId" asp-items="Model.Positions" class="form-select"
+                            style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);">
+                        <option value="">— Оберіть посаду —</option>
+                    </select>
+                    <span asp-validation-for="PositionId" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="HiredAt" class="form-label fw-bold small text-uppercase"
+                           style="letter-spacing:1px; color:#6B6B6B;">Дата прийому</label>
+                    <input asp-for="HiredAt" type="date" class="form-control"
+                           style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                    <span asp-validation-for="HiredAt" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="cc-status-box mb-2">
+                <div class="form-check form-switch d-flex align-items-center justify-content-between p-0 m-0">
+                    <label asp-for="IsActive" class="form-label mb-0 fw-semibold"
+                           style="cursor:pointer; color:#4A4A4A;">
+                        Активний співробітник
+                    </label>
+                    <input asp-for="IsActive" class="form-check-input m-0" type="checkbox"
+                           role="switch"
+                           style="width:2.5em; height:1.25em; cursor:pointer;" />
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:.4rem; margin-bottom:1.5rem;
+                color:#6B6B6B; font-size:.8rem; padding:0 .25rem;">
+                <i class="bi bi-info-circle" style="color:#8B4513;"></i>
+                Деактивований працівник не видаляється з системи —
+                <strong style="color:#4A4A4A;">історія завдань зберігається</strong> для подальшого аналізу.
+            </div>
+
+            <div style="margin-top:2rem; padding-top:2rem; border-top:1px solid #F5F5F5;"
+                 class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius:10px;">
+                    <i class="bi bi-check-circle me-2"></i>Зберегти зміни
+                </button>
+                <a asp-action="Index" class="btn btn-light px-4 py-2"
+                       style="border-radius:10px; background:#F8F9FA; color:#6B6B6B; border:1px solid #E9ECEF;">
+                    Скасувати
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

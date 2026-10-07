@@ -1,0 +1,437 @@
+﻿@model CaramelCloud.UI.Models.CustomCake.PlaceOrderWithCakeViewModel
+@{
+    ViewData["Title"] = "Оформлення замовлення";
+    var layers = ViewBag.Layers as List<CaramelCloud.UI.Models.CustomCake.CakeLayerViewModel> ?? new();
+
+    string GetFlavorColor(string name, bool isSponge)
+    {
+        if (string.IsNullOrEmpty(name)) return isSponge ? "#F7E4A0" : "#FEFCF0";
+        var lower = name.ToLower();
+        if (lower.Contains("шоколад")) return "#5C3A21";
+        if (lower.Contains("карамел")) return "#D49A59";
+        if (lower.Contains("малин") || lower.Contains("полуниц")) return "#E8607A";
+        if (lower.Contains("вишн")) return "#8B0000";
+        if (lower.Contains("фісташ")) return "#A6C36F";
+        if (lower.Contains("ваніл")) return isSponge ? "#FDF5D3" : "#FEFCF0";
+        if (lower.Contains("лимон")) return "#FFF44F";
+        if (lower.Contains("чорниц") || lower.Contains("смородин")) return "#665C84";
+        if (lower.Contains("манго") || lower.Contains("маракуй") || lower.Contains("апельсин")) return "#F4A460";
+       if (lower.Contains("оксамит")) return "#A62B2B";
+        return isSponge ? "#F7E4A0" : "#FEFCF0";
+    }
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="mb-1">Оформлення замовлення</h2>
+            <p class="text-muted mb-0 small">Ваш торт збережено — заповніть деталі доставки</p>
+        </div>
+        <a asp-action="Build" class="btn btn-outline-primary px-4">
+            <i class="bi bi-arrow-left me-2"></i>Повернутись до конструктора
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <form asp-action="Order" method="post" id="cakeOrderForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="CustomCakeId" />
+                <input type="hidden" name="DeliveryCost" id="deliveryCostInput" value="0" />
+
+                <div class="cc-form-card mb-4">
+                    <div class="cc-section-label mb-4">
+                        <i class="bi bi-truck me-2 text-cc-primary"></i>Доставка та оплата
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <label class="cc-form-label">Тип доставки</label>
+                            <div class="d-flex gap-3">
+                                <label style="flex:1; cursor:pointer;">
+                                    <input type="radio" name="deliveryType" value="pickup" id="radioPickup"
+                                           class="d-none" checked onchange="handleDeliveryType('pickup')" />
+                                    <div class="cc-delivery-card active" id="optPickup">
+                                        <i class="bi bi-house-door mb-2"></i>
+                                        <div class="cc-delivery-card-title">Самовивіз</div>
+                                        <div class="cc-delivery-card-sub">Безкоштовно</div>
+                                    </div>
+                                </label>
+                                <label style="flex:1; cursor:pointer;">
+                                    <input type="radio" name="deliveryType" value="courier" id="radioCourier"
+                                           class="d-none" onchange="handleDeliveryType('courier')" />
+                                    <div class="cc-delivery-card" id="optCourier">
+                                        <i class="bi bi-truck mb-2"></i>
+                                        <div class="cc-delivery-card-title">Кур'єр</div>
+                                        <div class="cc-delivery-card-sub">Острог та район</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <select asp-for="DeliveryMethodId" id="deliveryMethodSelect" class="d-none">
+                                @foreach (var m in Model.DeliveryMethods)
+                                {
+                                    <option value="@m.Value">@m.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-12" id="courierBlock" style="display:none;">
+                            <div class="cc-status-box">
+
+                                <div id="mapContainer" style="display:none; margin-bottom:1.5rem;">
+                                    <div id="map" style="height:320px; border-radius:12px; border:1px solid rgba(139,69,19,.15); overflow:hidden;"></div>
+                                    <div id="routeInfo" class="mt-2 p-2 text-center d-flex justify-content-around"
+                                         style="background:#fff; border-radius:8px; font-size:.85rem; border:1px solid var(--cc-border);">
+                                        <span><i class="bi bi-compass me-1 text-cc-primary"></i><span id="distVal" class="fw-bold">—</span> км</span>
+                                        <span><i class="bi bi-clock-history me-1 text-cc-primary"></i><span id="durVal" class="fw-bold">—</span> хв</span>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-7">
+                                        <label class="cc-form-label">Адреса доставки</label>
+                                        @if (Model.Addresses.Any())
+                                        {
+                                            <select asp-for="DeliveryAddressId" asp-items="Model.Addresses"
+                                                    id="savedAddressSelect" onchange="handleAddressSelect(this)"
+                                                    class="form-select mb-2" style="border-radius:10px;">
+                                                <option value="">— Оберіть збережену або введіть нову —</option>
+                                            </select>
+                                        }
+                                        <input type="text" name="DeliveryAddressCustom" id="deliveryAddressInput"
+                                               placeholder="Вулиця, будинок, місто"
+                                               class="form-control" style="border-radius:10px;" />
+                                        <div id="apiStatus" class="small mt-1" style="display:none;"></div>
+                                        <a asp-controller="DeliveryAddress" asp-action="Create"
+                                           asp-route-returnUrl="@Url.Action("Order", "CustomCake", new { cakeId = Model.CustomCakeId })"
+                                           style="color:#8B4513; font-size:.8rem; font-weight:500;
+                                               text-decoration:none; display:block; margin-top:.35rem;">
+                                            <i class="bi bi-plus me-1"></i>Додати нову адресу
+                                        </a>
+                                    </div>
+                                    <div class="col-md-5 d-flex align-items-end">
+                                        <button type="button" id="btnCalculateAPI" class="btn btn-primary w-100"
+                                                style="border-radius:10px; padding:.65rem 1rem;">
+                                            <i class="bi bi-calculator-fill me-2"></i>Розрахувати
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="costResultBlock" style="display:none; border-top:1px dashed rgba(139,69,19,.3); padding-top:1rem;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted" style="font-size:.9rem;">Вартість кур'єрської доставки:</span>
+                                        <span class="fw-bold text-cc-primary" style="font-size:1.1rem;" id="calculatedCostLabel">0 ₴</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="PaymentMethodId" class="cc-form-label">Спосіб оплати</label>
+                            <select asp-for="PaymentMethodId" asp-items="Model.PaymentMethods"
+                                    class="form-select" style="border-radius:10px;">
+                                <option value="">— Оберіть спосіб —</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DeliveryDate" class="cc-form-label">Дата та час</label>
+                            <input asp-for="DeliveryDate" type="datetime-local"
+                                   class="form-control" style="border-radius:10px;"
+                                   min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Comment" class="cc-form-label">Коментар</label>
+                            <textarea asp-for="Comment" class="form-control" rows="2"
+                                      style="border-radius:10px; resize:none;"
+                                      placeholder="Алергії, побажання щодо декору..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cc-form-card">
+                    <div class="cc-section-label mb-3">Підсумок</div>
+
+                    <div id="deliverySummaryRow" style="display:none; justify-content:space-between;" class="mb-2">
+                        <span class="text-muted" style="font-size:.8375rem;">Торт:</span>
+                        <span class="fw-500 text-dark" style="font-size:.8375rem;">@Model.CakePrice.ToString("N0") ₴</span>
+                    </div>
+                    <div id="deliverySummaryItem" style="display:none; justify-content:space-between;" class="mb-3">
+                        <span class="text-muted" style="font-size:.8375rem;">Доставка:</span>
+                        <span id="deliverySummaryAmt" class="fw-500 text-dark" style="font-size:.8375rem;">0 ₴</span>
+                    </div>
+
+                    <div style="height:1px; background:rgba(139,69,19,.12); margin-bottom:1.25rem;"></div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-semibold text-dark">Разом:</span>
+                        <span id="grandTotal" class="cc-serif text-cc-primary" style="font-size:1.75rem; font-weight:600;">
+                            @Model.CakePrice.ToString("N0") ₴
+                        </span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2"
+                            style="border-radius:12px; font-size:.9375rem;">
+                        <i class="bi bi-bag-check me-2"></i>Підтвердити замовлення
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="cc-form-card" style="position:sticky; top:80px;">
+                <h5 style="font-family:'Cormorant Garamond',serif;font-weight:600;
+                    margin-bottom:1.25rem;color:#8B4513;">
+                    <i class="bi bi-cake2 me-2"></i>@Model.CakeName
+                </h5>
+
+                @if (layers.Any())
+                {
+                    <div style="margin-bottom:1rem; background:#F8F4F0; border-radius:14px; padding:1rem; display:flex; flex-direction:column; align-items:center;">
+                        @for (int i = layers.Count - 1; i >= 0; i--)
+                        {
+                            var l = layers[i];
+                            var sCol = string.IsNullOrEmpty(l.LayerImage) ? GetFlavorColor(l.LayerName, true) : null;
+                            var fCol = string.IsNullOrEmpty(l.FillingImage) ? GetFlavorColor(l.FillingName, false) : null;
+                            <div style="width:200px; margin-bottom:1px;">
+                                @if (!string.IsNullOrEmpty(l.LayerImage))
+                                {
+                                    <div style="height:32px; background:url('@l.LayerImage') center/cover;
+                                        display:flex; align-items:center; justify-content:center;
+                                        font-size:.65rem; color:rgba(255,255,255,.8);">@l.LayerName</div>
+                                }
+                                else
+                                {
+                                    <div style="height:32px; background:@sCol;
+                                        display:flex; align-items:center; justify-content:center;
+                                        font-size:.65rem; color:rgba(255,255,255,.7);">@l.LayerName</div>
+                                }
+                                @if (!string.IsNullOrEmpty(l.FillingImage))
+                                {
+                                    <div style="height:11px; background:url('@l.FillingImage') center/cover;
+                                        display:flex; align-items:center; justify-content:center;
+                                        font-size:.6rem; color:rgba(255,255,255,.7);">@l.FillingName</div>
+                                }
+                                else
+                                {
+                                    <div style="height:11px; background:@fCol;
+                                        display:flex; align-items:center; justify-content:center;
+                                        font-size:.6rem; color:rgba(255,255,255,.6);">@l.FillingName</div>
+                                }
+                            </div>
+                        }
+                        <div style="width:228px; height:10px; background:linear-gradient(180deg,#D8D4CC,#C4C0B8); border-radius:50%; margin-top:-1px;"></div>
+                    </div>
+
+                    <p class="cc-section-label mb-2">Склад торта</p>
+                    <div style="display:grid; gap:.5rem; margin-bottom:1rem;">
+                        @foreach (var l in layers.OrderBy(x => x.LayerOrder))
+                        {
+                            var sCol = GetFlavorColor(l.LayerName, true);
+                            var fCol = GetFlavorColor(l.FillingName, false);
+                            <div style="display:grid; grid-template-columns:28px 1fr 1fr;
+                                gap:.75rem; align-items:center; padding:.6rem .85rem;
+                                background:#FAFAFA; border-radius:10px; border:1px solid var(--cc-border);">
+                                <span style="width:24px; height:24px; border-radius:6px;
+                                    background:rgba(139,69,19,.1); display:flex; align-items:center;
+                                    justify-content:center; font-weight:700; font-size:.75rem; color:#8B4513;">
+                                    @l.LayerOrder
+                                </span>
+                                <div>
+                                    <div style="font-size:.7rem; color:#6B6B6B; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.1rem;">Корж</div>
+                                    <div style="display:flex; align-items:center; gap:.4rem;">
+                                        <span style="width:10px; height:10px; border-radius:3px; background:@sCol; flex-shrink:0; border:1px solid rgba(0,0,0,.08);"></span>
+                                        <span style="font-weight:600; color:#171717; font-size:.85rem;">@l.LayerName</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size:.7rem; color:#6B6B6B; text-transform:uppercase; letter-spacing:.04em; margin-bottom:.1rem;">Начинка</div>
+                                    <div style="display:flex; align-items:center; gap:.4rem;">
+                                        <span style="width:10px; height:10px; border-radius:3px; background:@fCol; flex-shrink:0; border:1px solid rgba(0,0,0,.08);"></span>
+                                        <span style="font-weight:500; color:#6B6B6B; font-size:.85rem;">@l.FillingName</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div style="height:1px; background:rgba(139,69,19,.1); margin-bottom:1rem;"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:.875rem; color:#6B6B6B;">Вартість торта</span>
+                        <span style="font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:600; color:#8B4513;">
+                            @Model.CakePrice.ToString("N0") ₴
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .cc-section-label {
+        font-size: .7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--cc-text-muted);
+    }
+    .cc-delivery-card {
+        border: 2px solid var(--cc-border);
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        transition: all .2s ease;
+    }
+    .cc-delivery-card i { font-size: 1.5rem; color: var(--cc-text-muted); display: block; }
+    .cc-delivery-card-title { font-weight: 600; color: #171717; font-size: .9rem; }
+    .cc-delivery-card-sub   { font-size: .75rem; color: var(--cc-text-muted); }
+    .cc-delivery-card.active { border-color: var(--cc-primary); background: #FFF8F0; }
+    .cc-delivery-card.active i { color: var(--cc-primary); }
+    label:focus-within .cc-delivery-card {
+        outline: none;
+        box-shadow: 0 0 0 .25rem rgba(139,69,19,.25);
+        border-color: var(--cc-primary);
+    }
+    .btn:active {
+        outline: none !important;
+        box-shadow: 0 0 0 .25rem rgba(139,69,19,.25) !important;
+    }
+
+    .btn-primary:disabled,
+    .btn-primary.disabled {
+        background-color: var(--cc-primary-light) !important;
+        border-color: var(--cc-primary-light) !important;
+        color: rgba(255,255,255,.7) !important;
+        opacity: .8 !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+</style>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script>
+        const cakePrice = @Model.CakePrice.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        let map, routingControl;
+        const shopLat = 50.3280, shopLon = 26.5148;
+
+        function handleDeliveryType(type) {
+            const courierBlock = document.getElementById('courierBlock');
+            const summaryRow   = document.getElementById('deliverySummaryRow');
+            const summaryItem  = document.getElementById('deliverySummaryItem');
+            const optPickup    = document.getElementById('optPickup');
+            const optCourier   = document.getElementById('optCourier');
+
+            if (type === 'courier') {
+                courierBlock.style.display = 'block';
+                summaryRow.style.display   = 'flex';
+                summaryItem.style.display  = 'flex';
+                document.getElementById('deliveryMethodSelect').value = "@Model.DeliveryMethods.LastOrDefault()?.Value";
+                optCourier.classList.add('active');
+                optPickup.classList.remove('active');
+            } else {
+                courierBlock.style.display = 'none';
+                summaryRow.style.display   = 'none';
+                summaryItem.style.display  = 'none';
+                document.getElementById('deliveryMethodSelect').value = "@Model.DeliveryMethods.FirstOrDefault()?.Value";
+                updateDeliveryCost(0);
+                optPickup.classList.add('active');
+                optCourier.classList.remove('active');
+            }
+        }
+
+        function updateDeliveryCost(val) {
+            const cost = parseFloat(val) || 0;
+            document.getElementById('deliveryCostInput').value = cost.toFixed(2);
+            document.getElementById('deliverySummaryAmt').textContent = cost.toFixed(0) + ' ₴';
+            document.getElementById('grandTotal').textContent =
+                (cakePrice + cost).toLocaleString('uk-UA', { minimumFractionDigits: 0 }) + ' ₴';
+        }
+
+        function showMapWithRoute(clientLat, clientLon) {
+            document.getElementById('mapContainer').style.display = 'block';
+            if (!map) {
+                map = L.map('map').setView([(shopLat + clientLat) / 2, (shopLon + clientLon) / 2], 10);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+            }
+            if (routingControl) map.removeControl(routingControl);
+            const dot = color => `<div style="background:${color};width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>`;
+            if (map._shopMarker)   map.removeLayer(map._shopMarker);
+            if (map._clientMarker) map.removeLayer(map._clientMarker);
+            map._shopMarker   = L.marker([shopLat, shopLon],     { icon: L.divIcon({ className:'', html: dot('#8B4513'), iconAnchor:[7,7] }) }).addTo(map)
+                .bindPopup('<b>CaramelCloud</b>', { autoClose:false, closeOnClick:false }).openPopup();
+            map._clientMarker = L.marker([clientLat, clientLon], { icon: L.divIcon({ className:'', html: dot('#c0392b'), iconAnchor:[7,7] }) }).addTo(map)
+                .bindPopup('<b>Адреса доставки</b>', { autoClose:false, closeOnClick:false }).openPopup();
+            routingControl = L.Routing.control({
+                waypoints: [L.latLng(shopLat, shopLon), L.latLng(clientLat, clientLon)],
+                routeWhileDragging:false, addWaypoints:false, draggableWaypoints:false,
+                fitSelectedRoutes:true, show:false, createMarker:() => null,
+                lineOptions: { styles: [{ color:'#c0392b', weight:5, opacity:.85 }] },
+                router: L.Routing.osrmv1({ serviceUrl:'https://router.project-osrm.org/route/v1' })
+            }).addTo(map);
+            routingControl.on('routesfound', e => {
+                const s = e.routes[0].summary;
+                document.getElementById('distVal').textContent = (s.totalDistance / 1000).toFixed(1);
+                document.getElementById('durVal').textContent  = Math.round(s.totalTime / 60);
+            });
+            setTimeout(() => map.invalidateSize(), 300);
+        }
+
+        async function calculateDelivery() {
+            const addressInput = document.getElementById('deliveryAddressInput');
+            const address = addressInput.value;
+            const status  = document.getElementById('apiStatus');
+            const btn     = document.getElementById('btnCalculateAPI');
+            if (address.length < 5) { alert('Введіть точну адресу'); return; }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            status.style.display = 'block';
+            status.innerHTML = 'Розрахунок...';
+            const formData = new FormData();
+            formData.append('address', address);
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            try {
+                const response = await fetch('/DeliveryCalculator/CalculateJson', {
+                    method:'POST', headers:{ 'RequestVerificationToken': token }, body: formData
+                });
+                const data = await response.json();
+                if (data.addressFound && data.routeFound) {
+                    updateDeliveryCost(data.estimatedDeliveryCost);
+                    addressInput.value = data.foundDisplayName;
+                    document.querySelector('input[name="DeliveryAddressCustom"]').value = data.foundDisplayName;
+                    document.getElementById('costResultBlock').style.display = 'block';
+                    document.getElementById('calculatedCostLabel').textContent = data.formattedCost;
+                    status.innerHTML = '<i class="bi bi-check-circle text-success"></i> Готово';
+                    showMapWithRoute(data.clientLat, data.clientLon);
+                } else {
+                    status.innerHTML = '<span class="text-danger">Адресу не знайдено</span>';
+                }
+            } catch { status.innerHTML = 'Помилка'; }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-calculator-fill me-2"></i>Розрахувати';
+            }
+        }
+
+        function handleAddressSelect(select) {
+            if (select.value !== '') {
+                const text = select.options[select.selectedIndex].text;
+                document.getElementById('deliveryAddressInput').value = text;
+            }
+        }
+
+        document.getElementById('btnCalculateAPI').addEventListener('click', calculateDelivery);
+    </script>
+}

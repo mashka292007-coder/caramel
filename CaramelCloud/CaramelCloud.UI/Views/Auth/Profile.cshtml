@@ -1,0 +1,150 @@
+﻿@model CaramelCloud.UI.Models.Auth.EditProfileViewModel
+@{
+    ViewData["Title"] = "Мій профіль";
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif; font-size:2rem; color:#171717; margin:0;">
+                Мій профіль
+            </h2>
+            <p style="color:#6B6B6B; font-size:.875rem; margin:.25rem 0 0;">
+                Редагуйте особисті дані та налаштування акаунту
+            </p>
+        </div>
+        <a asp-controller="Home" asp-action="Index"
+               class="btn btn-outline-primary px-4" style="border-radius:8px; font-size:.9rem;">
+            <i class="bi bi-house me-2"></i>На головну
+        </a>
+    </div>
+
+    <div class="row g-4">
+        
+        <div class="col-12 col-md-4 col-xl-3">
+            <div class="cc-form-card text-center" style="background:#fff; border-radius:16px; padding:2.5rem 1.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+                <div class="d-inline-flex align-items-center justify-content-center mb-3"
+                     style="width: 120px; height: 120px; border-radius: 50%; background-color: #FDF6EE; color: #8B4513; font-size: 4rem; border: 2px solid #F0E0D0;">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                
+                <h4 style="font-family:'Cormorant Garamond',serif; color:#171717; margin-bottom: 0.25rem;">
+                    @(string.IsNullOrWhiteSpace(Model.FirstName) ? "Користувач" : $"{Model.FirstName} {Model.LastName}")
+                </h4>
+                <p style="color:#8A8A8A; font-size:.875rem; margin-bottom: 0;">
+                    Клієнт CaramelCloud
+                </p>
+
+                @if (Model.HasFacebookEmail)
+                {
+                    <div class="mt-3 p-2" style="background:#fff3cd; border-radius:8px; font-size:.78rem; color:#856404;">
+                        <i class="bi bi-facebook me-1" style="color:#1877F2"></i>
+                        Вхід через Facebook.<br />Вкажіть свій email нижче.
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-12 col-md-8 col-xl-9">
+            
+            <form asp-action="Profile" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     style="background:rgba(220,53,69,.06); border:1px solid rgba(220,53,69,.2);
+                    border-radius:12px; padding:.75rem 1rem; color:#b91c1c;
+                    font-size:.875rem; margin-bottom:1.5rem;">
+                </div>
+
+                <div class="cc-form-card mb-4" style="background:#fff; border-radius:16px; padding:2rem; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+
+                    <p style="font-size:.72rem; font-weight:700; text-transform:uppercase;
+                        letter-spacing:.07em; color:#6B6B6B; margin-bottom:1.5rem;">
+                        <i class="bi bi-person me-2" style="color:#8B4513;"></i>Особисті дані
+                    </p>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="FirstName" class="form-label fw-bold small text-uppercase"
+                                   style="letter-spacing:1px; color:#6B6B6B;">Ім'я</label>
+                            <input asp-for="FirstName" class="form-control"
+                                   style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                            <span asp-validation-for="FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LastName" class="form-label fw-bold small text-uppercase"
+                                   style="letter-spacing:1px; color:#6B6B6B;">Прізвище</label>
+                            <input asp-for="LastName" class="form-control"
+                                   style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                            <span asp-validation-for="LastName" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label fw-bold small text-uppercase"
+                                   style="letter-spacing:1px; color:#6B6B6B;">Email</label>
+                            @if (Model.IsGoogleUser && !Model.HasFacebookEmail)
+                            {
+                                <input asp-for="Email" class="form-control" readonly
+                                       style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border); background:#f8f9fa;" />
+                                <small style="color:#8A8A8A; font-size:.78rem;">Email з Google не можна змінити</small>
+                            }
+                            else
+                            {
+                                <input asp-for="Email" class="form-control"
+                                       style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);"
+                                       placeholder="your@email.com" />
+                                @if (Model.HasFacebookEmail)
+                                {
+                                    <small style="color:#856404; font-size:.78rem;">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Вкажіть свій справжній email
+                                    </small>
+                                }
+                            }
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Phone" class="form-label fw-bold small text-uppercase"
+                                   style="letter-spacing:1px; color:#6B6B6B;">Телефон</label>
+                            <input asp-for="Phone" class="form-control"
+                                   style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);"
+                                   placeholder="+380..." />
+                            <span asp-validation-for="Phone" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label asp-for="BirthDate" class="form-label fw-bold small text-uppercase"
+                                   style="letter-spacing:1px; color:#6B6B6B;">Дата народження</label>
+                            <input asp-for="BirthDate" type="date" class="form-control"
+                                   style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                            <small style="color:#8A8A8A; font-size:.78rem; margin-top:.35rem; display:block;">
+                                Необов'язково
+                            </small>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:2rem; padding-top:2rem; border-top:1px solid #F5F5F5;"
+                         class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius:10px; background-color: #8B4513; border-color: #8B4513;">
+                            <i class="bi bi-check-circle me-2"></i>Зберегти зміни
+                        </button>
+                        <a asp-controller="Home" asp-action="Index"
+                               class="btn btn-light px-4 py-2"
+                               style="border-radius:10px; background:#F8F9FA; color:#6B6B6B; border:1px solid #E9ECEF;">
+                            Скасувати
+                        </a>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

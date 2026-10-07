@@ -1,0 +1,5 @@
+.vs/
+bin
+obj
+*.user
+CaramelCloud/CaramelCloud.UI/appsettings.Development.json

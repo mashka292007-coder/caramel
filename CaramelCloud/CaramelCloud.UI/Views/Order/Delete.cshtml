@@ -1,0 +1,143 @@
+﻿@using CaramelCloud.UI.Models.Order
+@model OrderViewModel
+
+@{
+    ViewData["Title"] = $"Видалення замовлення #{Model.Id}";
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1" style="font-family:'Cormorant Garamond',serif; font-size:2.2rem; color:#171717;">
+                Видалити замовлення #@Model.Id?
+            </h2>
+            <p class="text-muted mb-0" style="font-size: .875rem;">
+                Цю дію неможливо скасувати
+            </p>
+        </div>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-cc px-4">
+            <i class="bi bi-arrow-left me-2"></i>Назад
+        </a>
+    </div>
+
+    <div style="background:rgba(220,53,69,.06); border:1px solid rgba(220,53,69,.2);
+        border-radius:1rem; padding:1.25rem 1.5rem; margin-bottom:1.5rem;
+        display:flex; align-items:flex-start; gap:1rem;">
+        <div style="width:44px; height:44px; border-radius:10px;
+            background:rgba(220,53,69,.1); flex-shrink:0;
+            display:flex; align-items:center; justify-content:center;">
+            <i class="bi bi-exclamation-triangle" style="color:#dc3545; font-size:1.2rem;"></i>
+        </div>
+        <div>
+            <div style="font-weight:600; color:#171717; font-size:.95rem; margin-bottom:.25rem;">
+                Увага! Наслідки видалення
+            </div>
+            <div style="color:#6B6B6B; font-size:.875rem; line-height:1.6;">
+                Буде назавжди видалено замовлення разом з усіма доданими позиціями та історією призначень працівників. <strong style="color:#171717;">Відновити ці дані буде неможливо.</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="cc-section-block">
+        
+        <div class="d-flex align-items-center mb-4 pb-3" style="border-bottom: 1px solid var(--cc-border);">
+            <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background: rgba(139,69,19,.1);">
+                <i class="bi bi-bag-x text-primary fs-5"></i>
+            </div>
+            <div>
+                <h5 class="fw-semibold text-dark m-0" style="font-family:'Cormorant Garamond',serif; font-size: 1.4rem;">
+                    Деталі замовлення
+                </h5>
+                <div style="font-size:0.85rem; color:#6B6B6B;">Перевірте інформацію перед видаленням</div>
+            </div>
+        </div>
+
+        <div class="row mb-4 g-4">
+            <div class="col-lg-6">
+                <div class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px; margin-bottom:.5rem;">Клієнт</div>
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background: rgba(139,69,19,.1);">
+                        <i class="bi bi-person text-primary fs-5"></i>
+                    </div>
+                    <span class="fw-semibold text-dark fs-5" style="font-family:'Cormorant Garamond',serif;">
+                        @(Model.CustomerName ?? "—")
+                    </span>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 d-flex flex-column justify-content-center">
+                <div class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px; margin-bottom:.5rem;">Статус замовлення</div>
+                <div>
+                    <span style="font-size:.85rem; padding:.4rem 1.2rem; border-radius:50px; font-weight:600; color: #616161; background: #F5F5F5; border: 1px solid var(--cc-border);">
+                        @Model.StatusName
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <div class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px; margin-bottom:.75rem;">Склад замовлення</div>
+            @if (Model.Items.Any())
+            {
+                <div style="border-radius: 16px; border: 1px solid var(--cc-border); overflow: hidden;">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in Model.Items)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center" style="background: #FAFAFA; border-color: var(--cc-border); padding: 1rem 1.25rem;">
+                                <div>
+                                    <span class="fw-medium text-dark">@item.Name</span>
+                                    <span class="text-muted ms-2" style="font-size: 0.85rem;">× @item.Quantity шт</span>
+                                </div>
+                                <span class="fw-semibold text-dark">@item.UnitPrice.ToString("N2") ₴</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            else
+            {
+                <div class="text-muted text-center" style="font-size: 0.9rem; padding: 2rem; background: #FAFAFA; border-radius: 16px; border: 1px dashed var(--cc-border);">
+                    <i class="bi bi-box-seam fs-3 d-block mb-2 text-secondary"></i>
+                    Позиції відсутні
+                </div>
+            }
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 p-4" style="background: rgba(139,69,19,.05); border-radius: 16px; border: 1px solid rgba(139,69,19,.1);">
+            <div class="text-uppercase fw-semibold" style="letter-spacing:1px; color:#8B4513; font-size: .9rem;">Загальна сума</div>
+            <div style="font-weight:700; color:#8B4513; font-size:1.75rem; font-family:'Cormorant Garamond',serif;">
+                @Model.TotalAmount.ToString("N2") ₴
+            </div>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            
+            <div class="d-flex gap-3 mt-4 pt-3 justify-content-end" style="border-top: 1px solid #F5F5F5;">
+                 <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-light px-5 py-3 text-dark fs-6" style="border-radius: 50px; font-weight:600; border: 1px solid var(--cc-border);">
+                    Скасувати
+                </a>
+                <button type="submit" class="btn btn-danger px-5 py-3 fs-6" style="border-radius: 50px;">
+                    <i class="bi bi-trash me-2"></i>Видалити назавжди
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<style>
+    .cc-section-block {
+        background: #fff;
+        border: 1px solid var(--cc-border);
+        border-radius: 1.25rem;
+        padding: 2.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,.03);
+    }
+    .cc-form-label {
+        display: block;
+        font-weight: 600;
+    }
+</style>

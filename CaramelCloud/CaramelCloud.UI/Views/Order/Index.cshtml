@@ -1,0 +1,297 @@
+﻿@using CaramelCloud.UI.Models.Order
+@model IEnumerable<OrderListItemViewModel>
+
+@{
+    ViewData["Title"] = "Замовлення";
+    bool isAdmin = User.IsInRole("Admin");
+    int totalCount = ViewBag.TotalCount ?? Model.Count();
+    int activeCount = ViewBag.ActiveCount ?? Model.Count(o => o.StatusId < 4);
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Замовлення</h2>
+            <p class="text-muted mb-0 small">
+                @(isAdmin ? "Усі замовлення кондитерської" : "Ваші замовлення")
+            </p>
+        </div>
+        @if (isAdmin)
+        {
+            <div class="col-auto ms-auto pt-3">
+                <a asp-action="Create" class="btn btn-primary px-4">
+                    <i class="bi bi-plus-lg me-2"></i>Нове замовлення
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="col-auto ms-auto pt-3">
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-primary px-4">
+                    <i class="bi bi-cart me-2"></i>Оформити замовлення
+                </a>
+            </div>
+        }
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-auto">
+            <div class="cc-stat-card">
+                <div class="cc-stat-icon">
+                    <i class="bi bi-bag-heart"></i>
+                </div>
+                <div>
+                    <div class="cc-stat-value">@totalCount</div>
+                    <div class="cc-stat-label">Всього замовлень</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="cc-stat-card cc-stat-card--active">
+                <div class="cc-stat-icon cc-stat-icon--active">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                    <div class="cc-stat-value">@activeCount</div>
+                    <div class="cc-stat-label">Активних</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (isAdmin)
+    {
+        <div class="cc-table-wrapper">
+            <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+                <h4 class="mb-0 text-dark fw-bold">Список замовлень</h4>
+                <div class="cc-search-wrapper">
+                    <i class="bi bi-search cc-search-icon"></i>
+                    <input type="text" class="form-control cc-search-input"
+                           placeholder="Пошук..." onkeyup="filterOrders(this.value)">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table cc-table align-middle mb-0" id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th style="width:70px;">#</th>
+                            <th>Клієнт</th>
+                            <th style="width:110px;">Джерело</th>
+                            <th style="width:170px;">Статус</th>
+                            <th style="width:120px;">Сума</th>
+                            <th style="width:130px;">Дата доставки</th>
+                            <th style="width:120px;">Створено</th>
+                            <th class="text-center" style="width:240px;">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in Model)
+                        {
+                            var statusClass = o.StatusId switch
+                            {
+                                1 => "cc-badge-status-1",
+                                2 => "cc-badge-status-2",
+                                3 => "cc-badge-status-3",
+                                4 => "cc-badge-status-4",
+                                5 => "cc-badge-status-5",
+                                _ => "cc-badge-status-default"
+                            };
+                            bool isCompleted = o.StatusId == 4;
+                            bool isCancelled = o.StatusId == 5;
+
+                            <tr>
+                                <td><span class="fw-semibold text-primary">#@o.Id</span></td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@(o.CustomerName ?? "—")</div>
+                                    @if (!string.IsNullOrEmpty(o.CustomerPhone))
+                                    {
+                                        <div class="text-muted small mt-1">@o.CustomerPhone</div>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var (sourceLabel, sourceClass) = o.Source switch
+                                        {
+                                            "telegram" => ("Telegram", "cc-badge-source-telegram"),
+                                            "site" => ("Сайт", "cc-badge-source-site"),
+                                            _ => ("Адмін", "cc-badge-source-admin")
+                                        };
+                                    }
+                                    <span class="cc-badge @sourceClass">@sourceLabel</span>
+                                </td>
+                                <td>
+                                    <span class="cc-badge @statusClass">@o.StatusName</span>
+                                    <div class="cc-stepper mt-1">
+                                        @for (int i = 1; i <= 4; i++)
+                                        {
+                                            string stepClass = "";
+                                            if (isCancelled) stepClass = "cancel";
+                                            else if (isCompleted) stepClass = "done";
+                                            else if (i < o.StatusId) stepClass = "done";
+                                            else if (i == o.StatusId) stepClass = "active";
+                                            <div class="cc-step @stepClass"></div>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark">
+                                        @o.TotalAmount.ToString("N0") <small>ГРН</small>
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (o.DeliveryDate.HasValue)
+                                    {
+                                        <div>@o.DeliveryDate.Value.ToString("dd.MM.yyyy")</div>
+                                        <div class="text-muted small">@o.DeliveryDate.Value.ToString("HH:mm")</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="text-muted">
+                                    @o.CreatedAt.ToString("dd.MM.yyyy")
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-1">
+                                        <a asp-action="Details" asp-route-id="@o.Id" class="cc-btn-table details">Деталі</a>
+                                        <a asp-action="Edit" asp-route-id="@o.Id" class="cc-btn-table edit">Редагувати</a>
+                                        <a asp-action="Delete" asp-route-id="@o.Id" class="cc-btn-table delete">Видалити</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                    Замовлень ще немає
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="px-4 py-3">
+                <partial name="Pagination" />
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="cc-orders-list">
+            <div class="cc-orders-list-header">
+                <span class="cc-orders-list-title">Мої замовлення</span>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                    Замовлень ще немає
+                </div>
+            }
+
+            @foreach (var o in Model)
+            {
+                bool isCompleted = o.StatusId == 4;
+                bool isCancelled = o.StatusId == 5;
+
+                string iconClass = o.StatusId switch
+                {
+                    1 => "cc-order-icon--s1",
+                    2 => "cc-order-icon--s2",
+                    3 => "cc-order-icon--s3",
+                    4 => "cc-order-icon--s4",
+                    5 => "cc-order-icon--s5",
+                    _ => "cc-order-icon--s1"
+                };
+
+                string badgeClass = o.StatusId switch
+                {
+                    1 => "cc-badge-status-1",
+                    2 => "cc-badge-status-2",
+                    3 => "cc-badge-status-3",
+                    4 => "cc-badge-status-4",
+                    5 => "cc-badge-status-5",
+                    _ => "cc-badge-status-default"
+                };
+
+                string stepperLabel = isCancelled ? "скасовано"
+                                    : isCompleted ? "виконано"
+                                    : $"крок {o.StatusId} з 4";
+                string stepperLabelClass = isCancelled ? "cc-stepper-label--cancel"
+                                         : isCompleted ? "cc-stepper-label--done"
+                                         : "cc-stepper-label--active";
+
+                <div class="cc-order-row">
+                    <div class="cc-order-icon @iconClass">
+                        <span class="cc-order-icon-id">#@o.Id</span>
+                        <span class="cc-order-icon-date">@o.CreatedAt.ToString("dd.MM")</span>
+                    </div>
+
+                    <div class="cc-order-mid">
+                        <div class="cc-order-name">Замовлення #@o.Id</div>
+                        @if (o.DeliveryDate.HasValue)
+                        {
+                            <div class="cc-order-sub">
+                                @(isCompleted ? "Доставлено:" : "Доставка:")
+                                @o.DeliveryDate.Value.ToString("dd.MM.yyyy") о @o.DeliveryDate.Value.ToString("HH:mm")
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="cc-order-sub">
+                                @(isCancelled ? "Скасовано" : "Дата доставки уточнюється")
+                            </div>
+                        }
+                        <div class="cc-stepper mt-2">
+                            @for (int i = 1; i <= 4; i++)
+                            {
+                                string stepClass = "";
+                                if (isCancelled) stepClass = "cancel";
+                                else if (isCompleted) stepClass = "done";
+                                else if (i < o.StatusId) stepClass = "done";
+                                else if (i == o.StatusId) stepClass = "active";
+                                <div class="cc-step @stepClass"></div>
+                            }
+                            <span class="cc-stepper-label @stepperLabelClass">@stepperLabel</span>
+                        </div>
+                    </div>
+
+                    <div class="cc-order-right">
+                        <span class="cc-order-price">@o.TotalAmount.ToString("N0") <span>грн</span></span>
+                        <span class="cc-badge @badgeClass">@o.StatusName</span>
+                        <a asp-action="Details" asp-route-id="@o.Id" class="cc-order-details-btn">
+                            <i class="bi bi-receipt me-1"></i>Деталі
+                        </a>
+                    </div>
+                </div>
+            }
+
+            <div class="px-4 py-3">
+                <partial name="Pagination" />
+            </div>
+
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function filterOrders(val) {
+            const rows = document.querySelectorAll('#ordersTable tbody tr');
+            const q = val.toLowerCase();
+            rows.forEach(r => {
+                if (r.querySelector('td').colSpan > 1) return;
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+}

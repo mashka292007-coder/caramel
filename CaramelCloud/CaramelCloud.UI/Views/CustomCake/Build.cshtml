@@ -1,0 +1,447 @@
+﻿@using System.Text.Json
+@model CaramelCloud.UI.Models.CustomCake.BuildCakeViewModel
+
+@{
+    ViewData["Title"] = "Конструктор торта";
+    var jsonOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var layerTypesJson   = JsonSerializer.Serialize(Model.LayerTypes,   jsonOpts);
+    var fillingTypesJson = JsonSerializer.Serialize(Model.FillingTypes, jsonOpts);
+    var sizesJson        = JsonSerializer.Serialize(Model.Sizes,        jsonOpts);
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#171717;margin:0;">
+                Конструктор торта
+            </h2>
+            <p style="color:#6B6B6B;font-size:.875rem;margin:.25rem 0 0;">
+                Оберіть розмір, натискайте на кожен шар і налаштовуйте його
+            </p>
+        </div>
+        <a asp-action="MyCakes" class="btn btn-outline-primary px-4" style="border-radius:8px;">
+            <i class="bi bi-collection me-2"></i>Мої торти
+        </a>
+    </div>
+
+    <form method="post" id="cakeForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="BasePrice" id="hBasePrice" value="150" />
+        <input type="hidden" name="Name"      id="hCakeName"  value="" />
+
+        <div class="cc-form-card mb-4">
+            <div class="mb-2" style="font-size:.75rem;color:#6B6B6B;text-transform:uppercase;letter-spacing:.7px;font-weight:600;">
+                Назва торта (необов'язково)
+            </div>
+            <input type="text" id="cakeNameInput" placeholder="Наприклад: Торт для Аліни..."
+                   oninput="document.getElementById('hCakeName').value=this.value"
+                   class="form-control" style="border-radius:10px;max-width:400px;" />
+        </div>
+
+        <div class="cc-form-card mb-4">
+            <div class="mb-3" style="font-size:.75rem;color:#6B6B6B;text-transform:uppercase;letter-spacing:.7px;font-weight:600;">
+                Розмір торта
+            </div>
+            <div class="d-flex gap-3" id="sizeBtns">
+                @for (int i = 0; i < Model.Sizes.Count; i++)
+                {
+                    var s = Model.Sizes[i];
+                    <button type="button" class="size-btn @(i == 0 ? "active" : "")"
+                            data-idx="@i" onclick="setSize(@i)">
+                        <span class="size-weight">@s.Label</span>
+                        <span class="size-layers">@s.LayerCount шари</span>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="cake-builder-grid">
+
+            <div>
+                <div class="cc-form-card mb-3">
+                    <div class="mb-3" style="font-size:.75rem;color:#6B6B6B;text-transform:uppercase;letter-spacing:.7px;font-weight:600;">
+                        <i class="bi bi-hand-index me-1"></i>Натисніть на шар щоб змінити
+                    </div>
+                    <div id="cakeWrap" style="display:flex;flex-direction:column;align-items:center;gap:0;"></div>
+                </div>
+
+                <div class="cc-form-card" id="pickerWrap" style="display:none;">
+                    <div class="picker-tabs">
+                        <button type="button" class="picker-tab active" id="tabSponge" onclick="switchTab('sponge')">
+                            <i class="bi bi-layers me-1"></i>Корж
+                        </button>
+                        <button type="button" class="picker-tab" id="tabFill" onclick="switchTab('fill')">
+                            <i class="bi bi-droplet-half me-1"></i>Начинка
+                        </button>
+                        <button type="button" onclick="closePicker()"
+                                style="padding:9px 14px;background:none;border:none;color:#6B6B6B;cursor:pointer;font-size:1.1rem;border-radius:0 14px 0 0;">×</button>
+                    </div>
+                    <div class="picker-grid" id="pickerGrid"></div>
+                </div>
+            </div>
+
+            <div style="position:sticky;top:80px;">
+                <div class="cc-form-card mb-3">
+                    <div class="mb-2" style="font-size:.75rem;color:#6B6B6B;text-transform:uppercase;letter-spacing:.7px;font-weight:600;">
+                        Склад торта
+                    </div>
+                    <div id="summaryList"></div>
+                </div>
+                <div class="cc-form-card mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.8rem;color:#6B6B6B;">База</span>
+                        <span style="font-size:.8rem;" id="priceBase">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span style="font-size:.8rem;color:#6B6B6B;">Шари та начинки</span>
+                        <span style="font-size:.8rem;" id="priceExtra">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between" style="border-top:1px solid var(--cc-border);padding-top:8px;margin-top:4px;">
+                        <span style="font-weight:600;">Разом</span>
+                        <span style="font-weight:700;font-size:1.15rem;color:#8B4513;" id="priceTotal">—</span>
+                    </div>
+                </div>
+
+                <div class="cc-form-card mb-3" id="aiBlock" style="display:none;">
+                    <div class="mb-2" style="font-size:.75rem;color:#6B6B6B;text-transform:uppercase;letter-spacing:.7px;font-weight:600;">
+                        <i class="bi bi-stars me-1" style="color:#C68A3A;"></i>Порада ШІ
+                    </div>
+                    <div id="aiText" class="text-muted" style="font-size:.875rem; line-height:1.6;"></div>
+                </div>
+                <button type="button" onclick="getAiAdvice()" 
+                        class="btn btn-outline-cc w-100 mb-2" style="border-radius:10px;">
+                    <i class="bi bi-stars me-2"></i>Отримати пораду ШІ
+                </button>
+
+                <button type="submit" class="btn btn-primary w-100 py-2" style="border-radius:10px;font-size:.95rem;">
+                    <i class="bi bi-bag-check me-2"></i>Оформити замовлення
+                </button>
+                <p style="font-size:.75rem;color:#6B6B6B;text-align:center;margin-top:8px;">
+                    Торт збережеться і ви зможете оформити доставку
+                </p>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+<style>
+.cake-builder-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:40px; align-items:start; }
+@@media(max-width:768px){ .cake-builder-grid{grid-template-columns:1fr;} }
+
+.size-btn { flex:1; padding:12px 8px; border:1px solid var(--cc-border); border-radius:12px;
+    background:#fff; color:#6B6B6B; font-size:.875rem; font-weight:500; cursor:pointer;
+    text-align:center; transition:all .18s; line-height:1.4; }
+.size-btn:hover { border-color:#8B4513; color:#8B4513; }
+.size-btn.active { border:2px solid #8B4513; background:#FDF6EE; color:#5C3A1E; }
+.size-btn .size-weight { font-size:1.1rem; font-weight:700; display:block; }
+.size-btn .size-layers { font-size:.75rem; color:inherit; opacity:.75; }
+
+.cake-layer-block { position:relative; cursor:pointer; transition:transform .12s; }
+.cake-layer-block:hover { transform:scale(1.015); }
+.cake-layer-block.selected-layer .layer-ring { opacity:1; }
+.layer-ring { position:absolute; inset:0; border-radius:6px; border:2.5px solid #8B4513;
+    opacity:0; pointer-events:none; transition:opacity .15s; }
+.sponge-stripe { border-radius:6px 6px 0 0; display:flex; align-items:center;
+    justify-content:center; font-size:.8rem; color:rgba(0,0,0,.5); font-weight:600; }
+.fill-stripe   { border-radius:0 0 6px 6px; display:flex; align-items:center;
+    justify-content:center; font-size:.75rem; color:rgba(0,0,0,.4); font-weight:500; }
+.cream-top-el  { border-radius:50%; background:#FFF9F4; border:1px solid rgba(139,69,19,.15);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.65rem; color:#C4A882; margin-bottom:2px; }
+.plate-el { background:#D3D1C7; border-radius:50%; margin-top:-2px; }
+
+.picker-panel { background:#fff; border:1px solid var(--cc-border); border-radius:14px; overflow:hidden; }
+.picker-tabs  { display:flex; border-bottom:1px solid var(--cc-border); }
+.picker-tab   { flex:1; padding:12px; font-size:.9rem; font-weight:600; text-align:center;
+    cursor:pointer; color:#6B6B6B; background:#FAFAFA; border:none; transition:all .15s; }
+.picker-tab.active { background:#fff; color:#8B4513; border-bottom:2px solid #8B4513; }
+.picker-tab:first-child { border-radius:14px 0 0 0; }
+.picker-tab:last-child  { border-radius:0 14px 0 0; }
+.picker-grid { display:grid; grid-template-columns:1fr 1fr; }
+.pick-item { padding:14px; cursor:pointer; display:flex; align-items:center; gap:12px;
+    border-bottom:1px solid var(--cc-border); transition:background .1s; }
+.pick-item:hover { background:#FDF6EE; }
+.pick-item.active { background:#FDF6EE; }
+.pick-item:nth-child(odd):not(:last-child) { border-right:1px solid var(--cc-border); }
+.pick-swatch { width:36px; height:36px; border-radius:8px; flex-shrink:0;
+    border:1px solid rgba(0,0,0,.09); background-size:cover; background-position:center; }
+.pick-name  { font-size:.85rem; font-weight:600; color:#171717; line-height:1.3; }
+.pick-price { font-size:.8rem; color:#8B4513; font-weight:500; }
+
+.layer-summary-row { display:flex; align-items:center; gap:12px; font-size:.9rem;
+    padding:10px 0; border-bottom:1px solid var(--cc-border); }
+.layer-summary-row:last-child { border-bottom:none; }
+.ls-num { width:24px; height:24px; border-radius:50%; background:#FDF6EE;
+    color:#8B4513; font-size:.8rem; font-weight:700;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ls-dot { width:14px; height:14px; border-radius:4px; flex-shrink:0; border:1px solid rgba(0,0,0,.1); }
+</style>
+}
+
+@section Scripts {
+<script>
+const LAYER_TYPES   = @Html.Raw(layerTypesJson);
+const FILLING_TYPES = @Html.Raw(fillingTypesJson);
+const SIZES         = @Html.Raw(sizesJson);
+
+let sizeIdx     = 0;
+let activeLayer = null;
+let activeTab   = 'sponge';
+let layers      = [];   
+
+const DEFAULT_SPONGE_COLORS = ['#F7E4A0','#F4B942','#F7DC6F','#E8B4D0'];
+const DEFAULT_FILL_COLORS   = ['#FEFCF0','#FFF44F','#D4A8C7','#9FD8CF'];
+
+function getFlavorColor(name, isSponge, defaultColor) {
+    if (!name) return defaultColor;
+    const lower = name.toLowerCase();
+    
+    if (lower.includes('шоколад')) return '#5C3A21'; 
+    if (lower.includes('караме'))  return '#D49A59'; 
+    if (lower.includes('малин') || lower.includes('полуниц')) return '#E8607A'; 
+    if (lower.includes('вишн'))    return '#8B0000'; 
+    if (lower.includes('фісташ'))  return '#A6C36F'; 
+    if (lower.includes('ваніл'))   return isSponge ? '#FDF5D3' : '#FEFCF0'; 
+    if (lower.includes('лимон'))   return '#FFF44F'; 
+    if (lower.includes('чорниц') || lower.includes('смородин')) return '#665C84'; 
+    if (lower.includes('манго') || lower.includes('маракуй') || lower.includes('апельсин')) return '#F4A460'; 
+    if (lower.includes('оксамит')) return '#A62B2B';
+    
+    return defaultColor;
+}
+
+function setSize(i) {
+    sizeIdx = i;
+    document.querySelectorAll('.size-btn').forEach((b,j) => b.classList.toggle('active', j===i));
+    document.getElementById('hBasePrice').value = SIZES[i].basePrice;
+    const n = SIZES[i].layerCount;
+    while (layers.length < n) layers.push({sponge:0, fill:0});
+    layers = layers.slice(0, n);
+    activeLayer = null;
+    closePicker();
+    renderCake();
+}
+
+function renderCake() {
+    const wrap = document.getElementById('cakeWrap');
+    wrap.innerHTML = '';
+    const n   = SIZES[sizeIdx].layerCount;
+    const W   = 200;
+    const sH  = 34, fH = 14;
+
+    const cream = document.createElement('div');
+    cream.className = 'cream-top-el';
+    cream.style.cssText = `width:${W}px;height:16px;`;
+    cream.textContent = 'покриття'; 
+    wrap.appendChild(cream);
+
+    for (let i = 0; i < n; i++) {
+        const lt = LAYER_TYPES[layers[i].sponge];
+        const ft = FILLING_TYPES[layers[i].fill];
+        
+        const defSCol = DEFAULT_SPONGE_COLORS[i % DEFAULT_SPONGE_COLORS.length];
+        const defFCol = DEFAULT_FILL_COLORS[i % DEFAULT_FILL_COLORS.length];
+        
+        const sCol = lt?.imageUrl ? null : getFlavorColor(lt?.name, true, defSCol);
+        const fCol = ft?.imageUrl ? null : getFlavorColor(ft?.name, false, defFCol);
+
+        const block = document.createElement('div');
+        block.className = 'cake-layer-block' + (activeLayer===i ? ' selected-layer' : '');
+        block.style.cssText = `width:${W}px;`;
+        block.onclick = () => openPicker(i);
+
+        const sponge = document.createElement('div');
+        sponge.className = 'sponge-stripe';
+        sponge.style.cssText = `height:${sH}px;width:100%;`;
+        if (lt?.imageUrl) {
+            sponge.style.backgroundImage = `url(${lt.imageUrl})`;
+            sponge.style.backgroundSize  = 'cover';
+        } else {
+            sponge.style.background = sCol;
+        }
+        sponge.textContent = lt?.name ?? '';
+
+        const fill = document.createElement('div');
+        fill.className = 'fill-stripe';
+        fill.style.cssText = `height:${fH}px;width:100%;`;
+        if (ft?.imageUrl) {
+            fill.style.backgroundImage = `url(${ft.imageUrl})`;
+            fill.style.backgroundSize  = 'cover';
+        } else {
+            fill.style.background = fCol;
+        }
+        fill.textContent = ft?.name ?? '';
+
+        const ring = document.createElement('div');
+        ring.className = 'layer-ring';
+
+        block.appendChild(sponge);
+        block.appendChild(fill);
+        block.appendChild(ring);
+        wrap.appendChild(block);
+    }
+
+    const plate = document.createElement('div');
+    plate.className = 'plate-el';
+    plate.style.cssText = `width:${W+24}px;height:12px;`;
+    wrap.appendChild(plate);
+
+    buildHiddenFields();
+    renderSummary();
+    renderPrice();
+}
+
+function openPicker(i) {
+    if (activeLayer === i) { closePicker(); return; }
+    activeLayer = i;
+    activeTab = 'sponge';
+    document.getElementById('pickerWrap').style.display = 'block';
+    document.getElementById('tabSponge').classList.add('active');
+    document.getElementById('tabFill').classList.remove('active');
+    renderPicker();
+    renderCake();
+}
+
+function closePicker() {
+    activeLayer = null;
+    document.getElementById('pickerWrap').style.display = 'none';
+    renderCake();
+}
+
+function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tabSponge').classList.toggle('active', tab==='sponge');
+    document.getElementById('tabFill').classList.toggle('active', tab==='fill');
+    renderPicker();
+}
+
+function renderPicker() {
+    const grid  = document.getElementById('pickerGrid');
+    const items = activeTab === 'sponge' ? LAYER_TYPES : FILLING_TYPES;
+    const curIdx= activeTab === 'sponge' ? layers[activeLayer].sponge : layers[activeLayer].fill;
+    
+    grid.innerHTML = '';
+    items.forEach((item, j) => {
+        const div = document.createElement('div');
+        div.className = 'pick-item' + (j===curIdx?' active':'');
+        div.onclick   = () => choose(j);
+        
+        const defCol = activeTab === 'sponge' ? DEFAULT_SPONGE_COLORS[j % DEFAULT_SPONGE_COLORS.length] : DEFAULT_FILL_COLORS[j % DEFAULT_FILL_COLORS.length];
+        const itemColor = getFlavorColor(item.name, activeTab === 'sponge', defCol);
+        
+        const bg = item.imageUrl ? `url(${item.imageUrl})` : itemColor;
+        div.innerHTML = `
+            <div class="pick-swatch" style="${item.imageUrl?'background-image':'background'}:${bg}"></div>
+            <div>
+                <div class="pick-name">${item.name}</div>
+                <div class="pick-price">+${item.extraPrice} ₴</div>
+            </div>`;
+        grid.appendChild(div);
+    });
+}
+
+function choose(j) {
+    if (activeLayer === null) return;
+    if (activeTab === 'sponge') layers[activeLayer].sponge = j;
+    else                        layers[activeLayer].fill   = j;
+    renderPicker();
+    renderCake();
+}
+
+function renderSummary() {
+    const n    = SIZES[sizeIdx].layerCount;
+    const list = document.getElementById('summaryList');
+    list.innerHTML = '';
+
+    for (let i = 0; i < n; i++) {
+        const lt = LAYER_TYPES[layers[i].sponge];
+        const ft = FILLING_TYPES[layers[i].fill];
+        
+        const defSCol = DEFAULT_SPONGE_COLORS[i % DEFAULT_SPONGE_COLORS.length];
+        const defFCol = DEFAULT_FILL_COLORS[i % DEFAULT_FILL_COLORS.length];
+        
+        const sCol = getFlavorColor(lt?.name, true, defSCol);
+        const fCol = getFlavorColor(ft?.name, false, defFCol);
+
+        const row = document.createElement('div');
+        row.className = 'layer-summary-row';
+        row.innerHTML = `
+            <div class="ls-num">${n - i}</div>
+            <div class="ls-dot" style="background:${sCol}"></div>
+            <span style="flex:1;font-size:.78rem;">${lt?.name??'—'}</span>
+            <div class="ls-dot" style="background:${fCol}"></div>
+            <span style="font-size:.78rem;color:#6B6B6B;">${ft?.name??'—'}</span>`;
+        list.appendChild(row);
+    }
+}
+
+function renderPrice() {
+    const base  = SIZES[sizeIdx].basePrice;
+    const n     = SIZES[sizeIdx].layerCount;
+    let extra   = 0;
+    for (let i = 0; i < n; i++) {
+        extra += (LAYER_TYPES[layers[i].sponge]?.extraPrice ?? 0)
+               + (FILLING_TYPES[layers[i].fill]?.extraPrice ?? 0);
+    }
+    document.getElementById('priceBase').textContent  = base + ' ₴';
+    document.getElementById('priceExtra').textContent = extra + ' ₴';
+    document.getElementById('priceTotal').textContent = (base + extra) + ' ₴';
+}
+
+function buildHiddenFields() {
+    document.querySelectorAll('.layer-hidden').forEach(el => el.remove());
+    const form = document.getElementById('cakeForm');
+ 
+    const n = SIZES[sizeIdx].layerCount;
+ 
+    layers.forEach((l, i) => {
+        const mkInput = (name, val) => {
+            const inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = name;
+            inp.value = val;
+            inp.className = 'layer-hidden';
+            form.appendChild(inp);
+        };
+        mkInput(`Layers[${i}].LayerOrder`,   n - i);
+        mkInput(`Layers[${i}].LayerTypeId`,   LAYER_TYPES[l.sponge]?.id ?? 0);
+        mkInput(`Layers[${i}].FillingTypeId`, FILLING_TYPES[l.fill]?.id ?? 0);
+    });
+}
+ 
+async function getAiAdvice() {
+    const n = SIZES[sizeIdx].layerCount;
+    const layerData = layers.slice(0, n).map((l, i) => ({
+        order: i + 1,
+        spongeName: LAYER_TYPES[l.sponge]?.name ?? '—',
+        fillingName: FILLING_TYPES[l.fill]?.name ?? '—'
+    }));
+
+    const aiBlock = document.getElementById('aiBlock');
+    const aiText  = document.getElementById('aiText');
+    aiBlock.style.display = 'block';
+    aiText.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Аналізую...';
+
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    const resp = await fetch('/CustomCake/GetAiAdvice', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': token
+        },
+        body: JSON.stringify({
+        layers: layerData,
+        availableSponges: LAYER_TYPES.map(l => l.name),
+        availableFills: FILLING_TYPES.map(f => f.name)
+})
+    });
+
+    const data = await resp.json();
+    aiText.textContent = data.advice;
+}
+
+setSize(0);
+</script>
+}

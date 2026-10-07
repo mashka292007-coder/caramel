@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="CaramelCloud.Domain/CaramelCloud.Domain.csproj" />
+  <Project Path="CaramelCloud.Infrastructure/CaramelCloud.Infrastructure.csproj" Id="19c76fa7-aa77-45f0-a8e1-1f1ca1ff29ef" />
+  <Project Path="CaramelCloud.UI/CaramelCloud.UI.csproj" />
+</Solution>

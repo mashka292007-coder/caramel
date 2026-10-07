@@ -1,0 +1,119 @@
+﻿@using CaramelCloud.UI.Models.Category
+@model IEnumerable<CategoryViewModel>
+
+<div class="container-fluid pt-4 px-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Категорії</h2>
+            <p class="text-muted mb-0" style="font-size:.875rem;">Управління категоріями продуктів</p>
+        </div>
+        <a asp-controller="Category" asp-action="Create" class="btn btn-primary px-4">
+            <i class="bi bi-plus-lg me-2"></i>Створити нову
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-auto">
+            <div class="cc-stat-card">
+                <div class="cc-stat-icon">
+                    <i class="bi bi-grid"></i>
+                </div>
+                <div>
+                    <div class="cc-stat-value">@Model.Count()</div>
+                    <div class="cc-stat-label">Всього категорій</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cc-table-wrapper">
+        <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+            <span class="cc-serif" style="font-size:1.3rem; font-weight:700; color:#171717;">
+                Список категорій
+            </span>
+            <div class="cc-search-wrapper">
+                <i class="bi bi-search cc-search-icon"></i>
+                <input type="text" class="form-control cc-search-input"
+                       placeholder="Пошук за назвою..." onkeyup="filterTable(this.value)">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table cc-table align-middle mb-0" id="categoryTable">
+                <thead>
+                    <tr>
+                        <th style="width:90px;">Фото</th>
+                        <th style="width:220px;">Назва</th>
+                        <th>Опис</th>
+                        <th class="text-end" style="width:180px;">Дії</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                {
+                                    <img src="@item.ImageUrl" alt="@item.Name"
+                                         style="width:56px; height:56px; object-fit:cover;
+                                    border-radius:10px; border:1px solid #E5E5E5;" />
+                                }
+                                else
+                                {
+                                    <div style="width:56px; height:56px; border-radius:10px;
+                                        background:#F5F5F5; border:1px solid #E5E5E5;
+                                        display:flex; align-items:center;
+                                        justify-content:center; color:#A05A2C;">
+                                        <i class="bi bi-image" style="font-size:1.3rem;"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">@item.Name</span>
+                            </td>
+                            <td class="text-muted" style="max-width:400px;">
+                                <span style="display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    @(string.IsNullOrEmpty(item.Description) ? "—" : item.Description)
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="cc-btn-table edit">Редагувати</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="cc-btn-table delete">Видалити</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="bi bi-grid fs-2 d-block mb-2" style="color:#E5E5E5;"></i>
+                                <span class="cc-serif d-block mb-1" style="font-size:1.1rem; color:#171717;">
+                                    Категорій ще немає
+                                </span>
+                                Натисніть «Створити нову», щоб додати першу категорію
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable(val) {
+            const rows = document.querySelectorAll('#categoryTable tbody tr');
+            const q = val.toLowerCase();
+            rows.forEach(r => {
+                if (r.querySelector('td').colSpan > 1) return;
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+}

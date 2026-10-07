@@ -1,0 +1,206 @@
+﻿@{
+    var categories = new[] {
+        new { Name = "Торти",    Image = "/images/cake.jpg",     Id = 1 },
+        new { Name = "Тістечка", Image = "/images/desserts.jpg", Id = 2 },
+        new { Name = "Печиво",   Image = "/images/cookies.jpg",  Id = 3 }
+    };
+}
+
+<section class="hero-container position-relative overflow-hidden">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 hero-text-col" style="z-index:10;">
+                <span class="d-inline-block mb-3 px-3 py-1 hero-label">
+                    Кондитерська Caramel Cloud
+                </span>
+                <h1 class="display-3 mb-4 fw-bold">
+                    Авторські десерти <br><span class="text-cc-primary">для ваших моментів</span>
+                </h1>
+                <p class="lead mb-5 text-muted cc-sans" style="max-width:500px;">
+                    Торти, тістечка та десерти, створені з натуральних інгредієнтів та любов'ю до деталей.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-primary px-4">
+                        Переглянути каталог
+                    </a>
+                    @if (!User.Identity!.IsAuthenticated)
+                    {
+                        <a asp-controller="Auth" asp-action="Login" class="btn btn-outline-cc px-4">Увійти</a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Order" asp-action="Index" class="btn btn-outline-cc px-4">Мої замовлення</a>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-6 position-relative mt-5 mt-lg-0 text-center">
+                <div class="cake-wrapper">
+                    <div class="cake-bg-blob"></div>
+                    <div class="deco-icon" style="top:-10%; right:20%;"><i class="bi bi-stars" style="font-size:2.5rem;"></i></div>
+                    <div class="deco-icon" style="bottom:25%; left:-5%;"><i class="bi bi-stars" style="font-size:1.8rem; animation-delay:1s;"></i></div>
+                    <div class="deco-icon" style="top:20%; left:10%;"><i class="bi bi-stars" style="font-size:1.2rem; animation-delay:0.5s;"></i></div>
+                    <img src="/images/cake-main.png" class="main-cake-img img-fluid" alt="Cake">
+                    <div class="cake-premium-shadow"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="benefits-section py-5">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-md-6 col-lg-3">
+                <div class="benefit-card-premium">
+                    <div class="benefit-icon-wrapper"><i class="bi bi-hand-thumbs-up"></i></div>
+                    <h4 class="cc-serif mb-3">Ручна робота</h4>
+                    <p class="small text-muted mb-0">Кожен десерт — це витвір мистецтва нашими майстрами.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="benefit-card-premium">
+                    <div class="benefit-icon-wrapper"><i class="bi bi-palette"></i></div>
+                    <h4 class="cc-serif mb-3">Індивідуально</h4>
+                    <p class="small text-muted mb-0">Створюємо унікальні дизайни за вашим бажанням.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="benefit-card-premium">
+                    <div class="benefit-icon-wrapper"><i class="bi bi-lightning-charge"></i></div>
+                    <h4 class="cc-serif mb-3">Швидка доставка</h4>
+                    <p class="small text-muted mb-0">Дбайливо доставимо ваше замовлення точно вчасно.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="benefit-card-premium">
+                    <div class="benefit-icon-wrapper"><i class="bi bi-patch-check"></i></div>
+                    <h4 class="cc-serif mb-3">Натурально</h4>
+                    <p class="small text-muted mb-0">Тільки свіжі фермерські продукти, жодних замінників.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5" style="background-color:var(--cc-cream-bg);">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-4 cc-serif">Оберіть категорію смаколиків</h2>
+            <div class="hero-divider"></div>
+        </div>
+        <div class="row g-4">
+            @foreach (var cat in categories)
+            {
+                <div class="col-md-4">
+                    <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@cat.Id"
+                       class="cat-card d-block overflow-hidden position-relative">
+                        <img src="@cat.Image" class="img-fluid w-100"
+                             style="height:350px; object-fit:cover;" alt="@cat.Name">
+                        <div class="cat-card-overlay position-absolute w-100 h-100 d-flex align-items-end p-4"
+                             style="top:0; left:0;">
+                            <div class="text-white w-100 text-center">
+                                <h3 class="cc-serif mb-1">@cat.Name</h3>
+                                <div class="d-flex align-items-center justify-content-center gap-2"
+                                     style="font-size:.8rem; opacity:.9;">
+                                    <span>Дивитись асортимент</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="container py-4">
+    <div class="stats-premium-block py-5">
+        <div class="row text-center text-white g-4">
+            <div class="col-6 col-md-3">
+                <div class="display-5 cc-serif fw-bold" style="color:var(--cc-caramel);">45+</div>
+                <div class="small text-uppercase opacity-75">Десертів</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="display-5 cc-serif fw-bold" style="color:var(--cc-caramel);">1200+</div>
+                <div class="small text-uppercase opacity-75">Клієнтів</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="display-5 cc-serif fw-bold" style="color:var(--cc-caramel);">100%</div>
+                <div class="small text-uppercase opacity-75">Натурально</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="display-5 cc-serif fw-bold" style="color:var(--cc-caramel);">24/7</div>
+                <div class="small text-uppercase opacity-75">Сервіс</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 mb-5" style="background-color:var(--cc-cream-bg);">
+    <div class="container text-center">
+        <div class="cta-premium-box p-5">
+            <h2 class="display-5 cc-serif mb-4">Готові обрати свій ідеальний десерт?</h2>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg px-5">
+                Перейти до каталогу <i class="bi bi-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+@section Styles {
+<style>
+    .hero-container { padding: 10px 0 0; background-color: var(--cc-cream-bg); }
+    .hero-text-col  { padding-top: 15px; }
+
+    .hero-label {
+        background: rgba(184,106,58,.1);
+        color: #B86A3A;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: .8rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    .hero-divider {
+        width: 60px; height: 3px;
+        background: var(--cc-caramel);
+        margin: 20px auto;
+        border-radius: 10px;
+    }
+    .main-cake-img {
+        display: block; position: relative; z-index: 5;
+        width: 88%; margin-top: 40px;
+        filter: drop-shadow(0 30px 60px rgba(139,69,19,.25));
+    }
+    .cake-wrapper {
+        position: relative; overflow: visible; padding-bottom: 20px;
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 100%),
+                            linear-gradient(to bottom, #000 60%, transparent 100%);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 100%),
+                    linear-gradient(to bottom, #000 60%, transparent 100%);
+        mask-composite: intersect;
+    }
+    .cake-bg-blob {
+        position: absolute; top: 50%; left: 50%; z-index: 1;
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(184,106,58,.1) 0%, transparent 70%);
+        filter: blur(50px); border-radius: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .cake-premium-shadow {
+        position: relative; z-index: 1;
+        width: 80%; height: 60px; margin: -50px auto 0;
+        background: radial-gradient(ellipse at center, rgba(139,69,19,.2) 0%, transparent 75%);
+        filter: blur(25px);
+    }
+    .deco-icon { position: absolute; z-index: 10; }
+    .bi-stars {
+        color: var(--cc-caramel);
+        filter: drop-shadow(0 0 10px rgba(198,138,58,.4));
+        animation: cc-twinkle 3s ease-in-out infinite;
+    }
+</style>
+}

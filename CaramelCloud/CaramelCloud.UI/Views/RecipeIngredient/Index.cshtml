@@ -1,0 +1,140 @@
+﻿@using CaramelCloud.UI.Models.RecipeIngredient
+@model IEnumerable<RecipeIngredientGroupViewModel>
+
+@{
+    int groupCount = Model.Count();
+    int totalIngredients = Model.Sum(g => g.Ingredients.Count);
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Інгредієнти рецептів</h2>
+            <p class="text-muted mb-0 small">Склад інгредієнтів по кожному рецепту</p>
+        </div>
+        <a asp-controller="RecipeIngredient" asp-action="Create" class="btn btn-primary px-4">
+            <i class="bi bi-plus-lg me-2"></i>Додати інгредієнт
+        </a>
+    </div>
+
+    @if (ViewBag.FilteredRecipeId != null)
+    {
+        <div class="cc-table-wrapper mb-3" style="border-color: rgba(139,69,19,.2);">
+            <div class="card-header d-flex align-items-center justify-content-between px-4 py-3"
+                 style="background: rgba(139,69,19,.04);">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="cc-stat-icon" style="width:36px; height:36px; border-radius:8px;">
+                        <i class="bi bi-funnel"></i>
+                    </div>
+                    <span class="text-muted small">
+                        Показано інгредієнти рецепту:
+                        <strong class="text-dark">@ViewBag.FilteredRecipeDescription</strong>
+                    </span>
+                </div>
+                <a asp-action="Index" class="cc-btn-table edit">
+                    <i class="bi bi-x-lg me-1"></i>Скинути фільтр
+                </a>
+            </div>
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-auto">
+            <div class="cc-stat-card">
+                <div class="cc-stat-icon">
+                    <i class="bi bi-list-check"></i>
+                </div>
+                <div>
+                    <div class="cc-stat-value">@groupCount</div>
+                    <div class="cc-stat-label">Рецептів з інгредієнтами</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="cc-stat-card cc-stat-card--active">
+                <div class="cc-stat-icon cc-stat-icon--active">
+                    <i class="bi bi-basket"></i>
+                </div>
+                <div>
+                    <div class="cc-stat-value">@totalIngredients</div>
+                    <div class="cc-stat-label">Всього інгредієнтів</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="cc-table-wrapper">
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-journal-x fs-2 d-block mb-2" style="color:#E5E5E5;"></i>
+                <span class="d-block mb-1" style="font-family:'Cormorant Garamond',serif; font-size:1.1rem; color:#171717;">
+                    Інгредієнти ще не додані
+                </span>
+                Спочатку створіть рецепт, потім додайте до нього інгредієнти
+            </div>
+        </div>
+    }
+    else
+    {
+        @foreach (var group in Model)
+        {
+            <div class="cc-table-wrapper mb-4">
+
+                <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="cc-stat-icon" style="width:36px; height:36px; border-radius:8px;">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <h4 class="mb-0 text-dark fw-bold" style="font-family:'Cormorant Garamond',serif;">
+                            @group.RecipeDescription
+                        </h4>
+                        <span class="cc-badge" style="background:rgba(139,69,19,.08); color:#6E3510; border:1px solid rgba(139,69,19,.15);">
+                            @group.Ingredients.Count інгр.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table cc-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Інгредієнт</th>
+                                <th style="width:160px;">Кількість</th>
+                                <th style="width:140px;">Одиниця</th>
+                                <th style="width:160px; text-align:right;">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in group.Ingredients)
+                            {
+                                <tr>
+                                    <td><span class="fw-semibold text-dark">@item.InventoryItemName</span></td>
+                                    <td><span class="fw-semibold text-dark">@item.Quantity.ToString("0.###")</span></td>
+                                    <td>
+                                        <span class="cc-badge" style="background:rgba(139,69,19,.08); color:#6E3510; border:1px solid rgba(139,69,19,.15);">
+                                            @item.Unit
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex gap-1">
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="cc-btn-table edit">
+                                                Редагувати
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="cc-btn-table delete">
+                                                Видалити
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        }
+    }
+
+</div>

@@ -1,0 +1,172 @@
+﻿@using CaramelCloud.UI.Models.Recipe
+@model IEnumerable<RecipeViewModel>
+
+@{
+    int totalCount = Model.Count();
+    int withIngredients = Model.Count(x => x.IngredientCount > 0);
+    int withoutIngredients = Model.Count(x => x.IngredientCount == 0);
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Рецепти</h2>
+            <p class="text-muted mb-0 small">Технологічні карти виробництва</p>
+        </div>
+        <a asp-controller="Recipe" asp-action="Create" class="btn btn-primary px-4">
+            <i class="bi bi-plus-lg me-2"></i>Створити новий
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-auto">
+            <div class="cc-stat-card">
+                <div class="cc-stat-icon">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div>
+                    <div class="cc-stat-value">@totalCount</div>
+                    <div class="cc-stat-label">Всього рецептів</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="cc-stat-card cc-stat-card--active">
+                <div class="cc-stat-icon cc-stat-icon--active">
+                    <i class="bi bi-list-ul"></i>
+                </div>
+                <div>
+                    <div class="cc-stat-value">@withIngredients</div>
+                    <div class="cc-stat-label">З інгредієнтами</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-auto">
+            <div class="cc-stat-card" style="border-color: rgba(220,53,69,.15);">
+                <div class="cc-stat-icon" style="background: rgba(220,53,69,.08); color: #dc3545;">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+                <div>
+                    <div class="cc-stat-value">@withoutIngredients</div>
+                    <div class="cc-stat-label">Без інгредієнтів</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cc-table-wrapper">
+        <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+            <h4 class="mb-0 text-dark fw-bold">Список рецептів</h4>
+            <div class="cc-search-wrapper">
+                <i class="bi bi-search cc-search-icon"></i>
+                <input type="text" class="form-control cc-search-input"
+                       placeholder="Пошук..." onkeyup="filterTable(this.value)">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table cc-table align-middle mb-0" id="recipeTable">
+                <thead>
+                    <tr>
+                        <th style="width:60px;">#</th>
+                        <th>Опис</th>
+                        <th>Нотатки</th>
+                        <th style="width:180px;">Продукт</th>
+                        <th style="width:150px; text-align:center;">Інгредієнти</th>
+                        <th style="width:160px; text-align:right;">Дії</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-muted" style="font-size:.85rem;">@item.Id</td>
+                            <td style="max-width:260px;">
+                                <span class="fw-semibold text-dark d-block text-truncate">
+                                    @(string.IsNullOrEmpty(item.Description) ? "—" : item.Description)
+                                </span>
+                            </td>
+                            <td style="max-width:220px;">
+                                <span class="text-muted d-block text-truncate">
+                                    @(string.IsNullOrEmpty(item.Notes) ? "—" : item.Notes)
+                                </span>
+                            </td>
+                            <td>
+                                @if (item.ProductName != "—")
+                                {
+                                    <span class="cc-badge" style="background:rgba(139,69,19,.08); color:#6E3510;
+                                        border:1px solid rgba(139,69,19,.15); max-width:160px;
+                                        overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;"
+                                          title="@item.ProductName">
+                                        @item.ProductName
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (item.IngredientCount > 0)
+                                {
+                                    <a asp-controller="RecipeIngredient"
+                                           asp-action="Index"
+                                           asp-route-recipeId="@item.Id"
+                                           class="cc-btn-table edit">
+                                        <i class="bi bi-list-ul me-1"></i>@item.IngredientCount шт
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="RecipeIngredient"
+                                           asp-action="Create"
+                                           class="cc-btn-table"
+                                           style="background:rgba(22,163,74,.08); color:#15803d; border-color:rgba(22,163,74,.2);">
+                                        <i class="bi bi-plus-lg me-1"></i>Додати
+                                    </a>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-1">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="cc-btn-table edit">
+                                        Редагувати
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="cc-btn-table delete">
+                                        Видалити
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-journal-text fs-2 d-block mb-2" style="color:#E5E5E5;"></i>
+                                <span class="d-block mb-1" style="font-family:'Cormorant Garamond',serif; font-size:1.1rem; color:#171717;">
+                                    Рецептів ще немає
+                                </span>
+                                Натисніть «Створити новий», щоб додати перший рецепт
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable(val) {
+            const rows = document.querySelectorAll('#recipeTable tbody tr');
+            const q = val.toLowerCase();
+            rows.forEach(r => {
+                if (r.querySelector('td').colSpan > 1) return;
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+}

@@ -1,0 +1,104 @@
+﻿@model CaramelCloud.UI.Models.Delivery.DeliveryCalculatorInputModel
+@{
+    ViewData["Title"] = "Калькулятор доставки";
+}
+
+<div class="container py-5" style="max-width:680px;">
+    <div class="text-center mb-5">
+        <div style="width:72px;height:72px;border-radius:1.2rem;background:linear-gradient(135deg,#FFF8F0,#F5E6D3);
+            border:1px solid rgba(139,69,19,.15);display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+            <i class="bi bi-truck" style="font-size:2rem;color:#8B4513;"></i>
+        </div>
+        <h1 style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:#171717;">
+            Калькулятор доставки
+        </h1>
+        <p style="color:#6B6B6B;font-size:.95rem;max-width:480px;margin:0 auto;">
+            Введіть вашу адресу — розрахуємо відстань від кондитерської та орієнтовну вартість доставки.
+        </p>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#FFF8F0,#F5E6D3);border-radius:1rem;
+        border:1px solid rgba(139,69,19,.12);padding:1.25rem 1.5rem;margin-bottom:2rem;
+        display:flex;align-items:center;gap:1rem;">
+        <div style="width:42px;height:42px;border-radius:.75rem;background:rgba(139,69,19,.1);
+            display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-shop" style="color:#8B4513;font-size:1.2rem;"></i>
+        </div>
+        <div>
+            <div style="font-weight:600;color:#171717;font-size:.9rem;">Кондитерська CaramelCloud</div>
+            <div style="color:#6B6B6B;font-size:.83rem;">
+                <i class="bi bi-geo-alt me-1"></i>м. Острог, просп. Незалежності 60
+            </div>
+        </div>
+    </div>
+
+    <div style="background:#fff;border-radius:1.25rem;border:1px solid rgba(139,69,19,.1);padding:2rem;">
+        <form asp-action="Calculate" asp-controller="DeliveryCalculator" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label asp-for="Address" class="form-label fw-semibold" style="color:#171717;"></label>
+                <div class="input-group">
+                    <span class="input-group-text" style="background:#FFF8F0;border-color:rgba(139,69,19,.2);color:#8B4513;">
+                        <i class="bi bi-geo-alt"></i>
+                    </span>
+                    <input asp-for="Address" class="form-control" id="addressInput"
+                           placeholder="Наприклад: Хмельницький, Хмельницька область"
+                           style="border-color:rgba(139,69,19,.2);" />
+                </div>
+                <span asp-validation-for="Address" class="text-danger small"></span>
+                <small class="text-muted">
+                    Формат: <strong>Місто, область</strong> або <strong>вулиця номер, місто</strong>
+                </small>
+            </div>
+            <button type="submit" class="btn w-100 py-3"
+                    style="background:#8B4513;color:#fff;border:none;border-radius:.85rem;font-weight:600;font-size:1rem;">
+                <i class="bi bi-calculator me-2"></i>Розрахувати доставку
+            </button>
+        </form>
+    </div>
+
+    <div class="mt-4" style="background:#FAFAFA;border-radius:1rem;border:1px solid #e9ecef;padding:1.25rem 1.5rem;">
+        <h6 style="font-weight:600;color:#444;margin-bottom:1rem;">
+            <i class="bi bi-info-circle me-2" style="color:#8B4513;"></i>Тарифи доставки
+        </h6>
+        <div class="row g-3 text-center">
+            <div class="col-4">
+                <div style="font-size:1.1rem;font-weight:700;color:#8B4513;">50 ₴</div>
+                <div style="font-size:.77rem;color:#6B6B6B;">Базова вартість</div>
+            </div>
+            <div class="col-4">
+                <div style="font-size:1.1rem;font-weight:700;color:#8B4513;">+15 ₴/км</div>
+                <div style="font-size:.77rem;color:#6B6B6B;">Понад 3 км</div>
+            </div>
+            <div class="col-4">
+                <div style="font-size:1.1rem;font-weight:700;color:#8B4513;">~60 хв</div>
+                <div style="font-size:.77rem;color:#6B6B6B;">Макс. час у місті</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-3">
+        <a href="/Order/PlaceOrder"
+               style="color:#8B4513;font-size:.875rem;font-weight:500;text-decoration:none;">
+            <i class="bi bi-arrow-left me-1"></i>Повернутись до оформлення замовлення
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('cc_delivery');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.address) {
+                        const input = document.querySelector('input[name="Address"]');
+                        if (input) input.value = data.address;
+                    }
+                } catch(e) {}
+            }
+        });
+    </script>
+}

@@ -1,0 +1,215 @@
+﻿@using CaramelCloud.UI.Models.Product
+@model CreateProductViewModel
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif; font-size:2rem; color:#171717; margin:0;">
+                Новий продукт
+            </h2>
+            <p style="color:#6B6B6B; font-size:.875rem; margin:.25rem 0 0;">
+                Додайте новий шедевр до вашого асортименту
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-primary px-4" style="border-radius:8px; font-size:.9rem;">
+            <i class="bi bi-arrow-left me-2"></i>Назад до списку
+        </a>
+    </div>
+
+    <div class="cc-form-card">
+        <form method="post" enctype="multipart/form-data">
+            <div class="row g-5">
+
+                <div class="col-md-7">
+
+                    <div class="mb-4">
+                        <label asp-for="Name" class="form-label fw-bold small text-uppercase"
+                               style="letter-spacing:1px; color:#6B6B6B;">Назва продукту</label>
+                        <input asp-for="Name" class="form-control"
+                               style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);"
+                               placeholder="Наприклад: Макарун 'Солона карамель'..." />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label fw-bold small text-uppercase"
+                               style="letter-spacing:1px; color:#6B6B6B;">Опис</label>
+                        <textarea asp-for="Description" class="form-control" rows="4"
+                                  style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border); resize:none;"
+                                  placeholder="Опишіть смакові якості, начинку або особливості..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Price" class="form-label fw-bold small text-uppercase"
+                                   style="letter-spacing:1px; color:#6B6B6B;">Ціна (грн)</label>
+                            <div class="input-group">
+                                <input asp-for="Price" class="form-control"
+                                       style="border-radius:12px 0 0 12px; padding:.75rem 1rem; border:1px solid var(--cc-border);"
+                                       placeholder="0.00" />
+                                <span class="input-group-text cc-input-addon">₴</span>
+                            </div>
+                            <span asp-validation-for="Price" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CategoryId" class="form-label fw-bold small text-uppercase"
+                                   style="letter-spacing:1px; color:#6B6B6B;">Категорія</label>
+                            <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select"
+                                    style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);">
+                                <option value="">— Оберіть категорію —</option>
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Weight" class="form-label fw-bold small text-uppercase"
+                                   style="letter-spacing:1px; color:#6B6B6B;">Вага (кг)</label>
+                            <div class="input-group">
+                                <input asp-for="Weight" class="form-control"
+                                       style="border-radius:12px 0 0 12px; padding:.75rem 1rem; border:1px solid var(--cc-border);"
+                                       placeholder="0.000" />
+                                <span class="input-group-text cc-input-addon">кг</span>
+                            </div>
+                            <span asp-validation-for="Weight" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ServingSize" class="form-label fw-bold small text-uppercase"
+                                   style="letter-spacing:1px; color:#6B6B6B;">Розмір порції (шт)</label>
+                            <div class="input-group">
+                                <input asp-for="ServingSize" class="form-control"
+                                       style="border-radius:12px 0 0 12px; padding:.75rem 1rem; border:1px solid var(--cc-border);"
+                                       placeholder="0" />
+                                <span class="input-group-text cc-input-addon">шт</span>
+                            </div>
+                            <span asp-validation-for="ServingSize" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="RecipeId" class="form-label fw-bold small text-uppercase"
+                               style="letter-spacing:1px; color:#6B6B6B;">Прив'язати рецепт (опціонально)</label>
+                        <select asp-for="RecipeId" asp-items="Model.Recipes" class="form-select"
+                                style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);">
+                            <option value="">— Без рецепту —</option>
+                        </select>
+                        <small class="text-muted mt-1 d-block">
+                            Допоможе автоматично розраховувати собівартість у майбутньому.
+                        </small>
+                    </div>
+
+                </div>
+
+                <div class="col-md-5">
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase"
+                               style="letter-spacing:1px; color:#6B6B6B;">Фото продукту</label>
+
+                        <div style="border:2px dashed rgba(139,69,19,.2); border-radius:16px; padding:2rem;
+                            background:#FAF9F8; text-align:center; transition:border-color .2s;"
+                             id="drop-area"
+                             ondragover="event.preventDefault(); this.style.borderColor='#8B4513';"
+                             ondragleave="this.style.borderColor='rgba(139,69,19,.2)';"
+                             ondrop="handleDrop(event)">
+
+                            <div id="image-preview-container" class="mb-3">
+                                <i class="bi bi-cloud-upload" id="upload-icon"
+                                   style="font-size:3rem; color:rgba(139,69,19,.3);"></i>
+                            </div>
+
+                            <p class="small text-muted mb-3" id="upload-hint">
+                                Перетягніть фото або оберіть файл
+                            </p>
+
+                            <input asp-for="ImageFile" type="file" id="productImageInput"
+                                   accept="image/*" class="d-none"
+                                   onchange="previewImage(this)" />
+
+                            <button type="button" class="btn btn-outline-primary btn-sm px-4"
+                                    style="border-radius:8px;"
+                                    onclick="document.getElementById('productImageInput').click()">
+                                <i class="bi bi-folder2-open me-2"></i>Вибрати фото
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2 text-center">
+                            Рекомендовано: JPG або PNG, квадрат 1:1
+                        </small>
+                    </div>
+
+                    <div class="cc-status-box">
+                        <div class="form-check form-switch d-flex align-items-center justify-content-between p-0">
+                            <label asp-for="IsAvailable" class="form-label mb-0 fw-semibold"
+                                   style="cursor:pointer; color:#4A4A4A;">
+                                Доступний для продажу
+                            </label>
+                            <input asp-for="IsAvailable" class="form-check-input" type="checkbox"
+                                   role="switch" checked
+                                   style="width:2.5em; height:1.25em; cursor:pointer;" />
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div style="margin-top:3rem; padding-top:2rem; border-top:1px solid #F5F5F5;"
+                 class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius:10px;">
+                    <i class="bi bi-check-circle me-2"></i>Створити продукт
+                </button>
+                <a asp-action="Index" class="btn btn-light px-4 py-2"
+                       style="border-radius:10px; background:#F8F9FA; color:#6B6B6B; border:1px solid #E9ECEF;">
+                    Скасувати
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                showPreview(input.files[0]);
+            }
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            const dropArea = document.getElementById('drop-area');
+            dropArea.style.borderColor = 'rgba(139,69,19,.2)';
+
+            const file = event.dataTransfer.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            document.getElementById('productImageInput').files = dt.files;
+
+            showPreview(file);
+        }
+
+        function showPreview(file) {
+            const container = document.getElementById('image-preview-container');
+            const icon      = document.getElementById('upload-icon');
+            const hint      = document.getElementById('upload-hint');
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                container.innerHTML = `
+                    <img src="${e.target.result}"
+                         style="width:180px; height:180px; object-fit:cover;
+                                border-radius:16px; border:3px solid #fff;
+                                box-shadow:0 10px 20px rgba(0,0,0,.1);" />`;
+                if (icon) icon.style.display = 'none';
+                if (hint) hint.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+}

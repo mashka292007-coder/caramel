@@ -1,0 +1,30 @@
+﻿namespace CaramelCloud.Infrastructure.Services.TelegramBot
+{
+    public enum OrderStep
+    {
+        Start,
+        MainMenu,
+        AskingAuthChoice,
+        RegisterEmail,
+        RegisterPassword,
+        RegisterFirstName,
+        RegisterLastName,
+        RegisterPhone,
+        LoginEmail,
+        LoginPassword,
+        ChoosingCategory,
+        ChoosingProduct,
+        SearchingProduct,      
+        AskDeliveryType,
+        EnteringAddress,
+        AskDeliveryDate,
+        AskDeliveryTime,
+        AskPaymentMethod,
+        AskComment,
+        Confirm,
+        EditFirstName,
+        EditLastName,
+        EditPhone,
+        EditBirthDate,
+    }
+}

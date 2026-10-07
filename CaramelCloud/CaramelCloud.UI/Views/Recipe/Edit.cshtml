@@ -1,0 +1,74 @@
+﻿@using CaramelCloud.UI.Models.Recipe
+@model RecipeViewModel
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif; font-size:2rem; color:#171717; margin:0;">
+                Редагування рецепту
+            </h2>
+            <p style="color:#6B6B6B; font-size:.875rem; margin:.25rem 0 0;">
+                Оновіть опис та нотатки
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-primary px-4" style="border-radius:8px; font-size:.9rem;">
+            <i class="bi bi-arrow-left me-2"></i>Назад до списку
+        </a>
+    </div>
+
+    <div class="cc-form-card">
+        <form method="post">
+            <input asp-for="Id" type="hidden" />
+
+            <div class="mb-4">
+                <label asp-for="Description" class="form-label fw-bold small text-uppercase"
+                       style="letter-spacing:1px; color:#6B6B6B;">Опис рецепту</label>
+                <textarea asp-for="Description" class="form-control auto-resize" rows="3"
+                          placeholder="Короткий опис страви..."
+                          style="border-radius:12px; padding:.75rem 1rem;
+                border:1px solid var(--cc-border); resize:none; overflow:hidden; min-height:100px;"></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Notes" class="form-label fw-bold small text-uppercase"
+                       style="letter-spacing:1px; color:#6B6B6B;">Нотатки</label>
+                <textarea asp-for="Notes" class="form-control auto-resize" rows="4"
+                          placeholder="Детальні інструкції, секрети приготування..."
+                          style="border-radius:12px; padding:.75rem 1rem;
+                border:1px solid var(--cc-border); resize:none; overflow:hidden; min-height:150px;
+                transition: border-color 0.2s;"></textarea>
+                <span asp-validation-for="Notes" class="text-danger small"></span>
+            </div>
+
+            <div style="margin-top:3rem; padding-top:2rem; border-top:1px solid #F5F5F5;"
+                 class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius:10px;">
+                    <i class="bi bi-check-circle me-2"></i>Зберегти зміни
+                </button>
+                <a asp-action="Index" class="btn btn-light px-4 py-2"
+                       style="border-radius:10px; background:#F8F9FA; color:#6B6B6B; border:1px solid #E9ECEF;">
+                    Скасувати
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        const autoResizeTextareas = document.querySelectorAll('.auto-resize');
+        
+        autoResizeTextareas.forEach(textarea => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        });
+    </script>
+}

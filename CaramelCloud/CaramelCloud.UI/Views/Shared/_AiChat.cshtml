@@ -1,0 +1,48 @@
+﻿@if (User.Identity?.IsAuthenticated == true || true)
+{
+<div id="aiChat">
+
+    <button id="aiChatToggle" onclick="toggleChat()" aria-label="Відкрити чат з консультантом">
+        <i class="bi bi-stars" id="aiChatIcon"></i>
+    </button>
+
+    <div id="aiChatPopup" aria-live="polite">
+
+        <div class="ai-chat-header">
+            <div class="ai-chat-header-info">
+                <div class="ai-chat-avatar">
+                    <i class="bi bi-stars"></i>
+                </div>
+                <div>
+                    <div class="ai-chat-name">CaramelCloud AI</div>
+                    <div class="ai-chat-status">
+                        <span class="ai-chat-dot"></span> онлайн
+                    </div>
+                </div>
+            </div>
+            <button class="ai-chat-close" onclick="toggleChat()" aria-label="Закрити">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="ai-chat-messages" id="aiChatMessages">
+            <div class="ai-msg ai-msg--bot">
+                <div class="ai-msg-bubble">
+                    Привіт! Я консультант CaramelCloud. Розкажіть, що вас цікавить — допоможу обрати ідеальний десерт 🍰
+                </div>
+            </div>
+        </div>
+
+        <div class="ai-chat-footer">
+            <input type="text" id="aiChatInput"
+                   placeholder="Напишіть повідомлення..."
+                   onkeydown="if(event.key==='Enter') sendMessage()"
+                   maxlength="300" />
+            <button id="aiChatSend" onclick="sendMessage()" aria-label="Надіслати">
+                <i class="bi bi-send-fill"></i>
+            </button>
+        </div>
+
+    </div>
+</div>
+}

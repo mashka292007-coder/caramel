@@ -1,0 +1,114 @@
+﻿@using CaramelCloud.UI.Models.InventoryItem
+@model InventoryItemViewModel
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif; font-size:2rem; color:#171717; margin:0;">
+                Редагування позиції складу
+            </h2>
+            <p style="color:#6B6B6B; font-size:.875rem; margin:.25rem 0 0;">
+                Оновіть дані про «@Model.ItemName»
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-primary px-4" style="border-radius:8px; font-size:.9rem;">
+            <i class="bi bi-arrow-left me-2"></i>Назад до списку
+        </a>
+    </div>
+
+    @if (Model.IsCritical)
+    {
+        <div style="background:rgba(220,53,69,.06); border:1px solid rgba(220,53,69,.2);
+            border-radius:1rem; padding:1rem 1.5rem; margin-bottom:1.5rem;
+            display:flex; align-items:center; gap:1rem;">
+            <div style="width:40px; height:40px; border-radius:10px;
+                background:rgba(220,53,69,.1);
+                display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <i class="bi bi-exclamation-triangle" style="color:#dc3545; font-size:1.1rem;"></i>
+            </div>
+            <div>
+                <div style="font-weight:600; color:#171717; font-size:.9rem;">
+                    Критичний залишок
+                </div>
+                <div style="color:#6B6B6B; font-size:.8rem; margin-top:.1rem;">
+                    Поточна кількість <strong>@Model.Quantity.ToString("F3") @Model.Unit</strong>
+                    нижча за мінімальну <strong>@Model.MinQuantity.ToString("F3") @Model.Unit</strong> — поповніть запас
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="cc-form-card">
+        <form method="post">
+            <input asp-for="Id" type="hidden" />
+
+            <div class="mb-4">
+                <label asp-for="ItemName" class="form-label fw-bold small text-uppercase"
+                       style="letter-spacing:1px; color:#6B6B6B;">Назва інгредієнта</label>
+                <input asp-for="ItemName" class="form-control"
+                       style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                <span asp-validation-for="ItemName" class="text-danger small"></span>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="Quantity" class="form-label fw-bold small text-uppercase"
+                           style="letter-spacing:1px; color:#6B6B6B;">Кількість</label>
+                    <input asp-for="Quantity" class="form-control"
+                           style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                    <span asp-validation-for="Quantity" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Unit" class="form-label fw-bold small text-uppercase"
+                           style="letter-spacing:1px; color:#6B6B6B;">Одиниця виміру</label>
+                    <input asp-for="Unit" class="form-control"
+                           style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                    <span asp-validation-for="Unit" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="MinQuantity" class="form-label fw-bold small text-uppercase"
+                       style="letter-spacing:1px; color:#6B6B6B;">Мінімальна кількість</label>
+                <input asp-for="MinQuantity" class="form-control"
+                       style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                <div style="display:flex; align-items:center; gap:.4rem; margin-top:.4rem;
+                    color:#6B6B6B; font-size:.8rem;">
+                    <i class="bi bi-info-circle" style="color:#8B4513;"></i>
+                    Якщо поточна кількість нижче цього значення — позиція позначається як критична
+                </div>
+                <span asp-validation-for="MinQuantity" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold small text-uppercase"
+                       style="letter-spacing:1px; color:#6B6B6B;">Останнє оновлення</label>
+                <div style="display:flex; align-items:center; gap:.5rem; color:#6B6B6B;
+                    font-size:.9rem; padding:.75rem 1rem; background:#FAFAFA;
+                    border-radius:12px; border:1px solid var(--cc-border);">
+                    <i class="bi bi-clock" style="color:#8B4513;"></i>
+                    @Model.LastUpdated.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                    <span style="font-size:.8rem; color:#A0A0A0; margin-left:.25rem;">
+                        (оновлюється автоматично при збереженні)
+                    </span>
+                </div>
+            </div>
+
+            <div style="margin-top:3rem; padding-top:2rem; border-top:1px solid #F5F5F5;"
+                 class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius:10px;">
+                    <i class="bi bi-check-circle me-2"></i>Зберегти зміни
+                </button>
+                <a asp-action="Index" class="btn btn-light px-4 py-2"
+                       style="border-radius:10px; background:#F8F9FA; color:#6B6B6B; border:1px solid #E9ECEF;">
+                    Скасувати
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

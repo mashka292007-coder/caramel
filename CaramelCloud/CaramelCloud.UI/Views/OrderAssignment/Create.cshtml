@@ -1,0 +1,93 @@
+﻿@using CaramelCloud.UI.Models.OrderAssignment
+@model CreateAssignmentViewModel
+
+@{
+    ViewData["Title"] = "Призначити працівника";
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    
+    <div class="mx-auto" style="max-width: 750px;">
+        
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#171717;margin:0;font-weight:600;">
+                    Призначити працівника
+                </h2>
+                <p style="color:#6B6B6B;font-size:.875rem;margin:.25rem 0 0;">
+                    Оберіть працівника та роль для замовлення #@Model.OrderId
+                </p>
+            </div>
+            <a asp-controller="Order" asp-action="Details" asp-route-id="@Model.OrderId"
+                   class="btn btn-outline-primary px-4" style="border-radius:8px;">
+                <i class="bi bi-arrow-left me-2"></i>До замовлення
+            </a>
+        </div>
+
+        <div class="cc-form-card" style="background:#fff; border:1px solid var(--cc-border); border-radius:1.25rem; padding:2.5rem; box-shadow:0 4px 20px rgba(0,0,0,.03);">
+            
+            <div class="d-flex align-items-center mb-4" style="border-bottom: 1px solid #F5F5F5; padding-bottom: 1.5rem;">
+                <div style="background:#FFF5F5; color:#8B4513; width:45px; height:45px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-right:1rem;">
+                    <i class="bi bi-person-badge fs-5"></i>
+                </div>
+                <div>
+                    <h5 style="font-family:'Cormorant Garamond',serif; font-weight:600; color:#8B4513; margin:0; font-size:1.3rem;">
+                        Деталі призначення
+                    </h5>
+                    <div style="font-size:0.8rem; color:#6B6B6B;">Вкажіть відповідального та його роль</div>
+                </div>
+            </div>
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="OrderId" type="hidden" />
+
+                <div class="row g-4">
+                    
+                    <div class="col-md-6">
+                        <label asp-for="EmployeeId" class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+                            Працівник <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="EmployeeId" asp-items="Model.Employees" class="form-select" style="border-radius:12px;padding:.85rem 1rem;border:1px solid var(--cc-border); cursor: pointer;">
+                            <option value="">— Оберіть працівника —</option>
+                        </select>
+                        <span asp-validation-for="EmployeeId" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="AssignmentTypeId" class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+                            Тип роботи (Роль) <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="AssignmentTypeId" asp-items="Model.AssignmentTypes" class="form-select" style="border-radius:12px;padding:.85rem 1rem;border:1px solid var(--cc-border); cursor: pointer;">
+                            <option value="">— Оберіть тип —</option>
+                        </select>
+                        <span asp-validation-for="AssignmentTypeId" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Notes" class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+                            Примітки / Вказівки
+                        </label>
+                        <textarea asp-for="Notes" class="form-control" rows="3" style="border-radius:12px;padding:.85rem 1rem;border:1px solid var(--cc-border);resize:none;" placeholder="Додайте особливі вказівки для працівника..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    
+                </div>
+
+                <div style="margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid #F5F5F5;" class="d-flex gap-3 justify-content-end align-items-center">
+                    <a asp-controller="Order" asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-light px-4 py-2" style="border-radius:10px;background:#F8F9FA;color:#6B6B6B;border:1px solid #E9ECEF;font-weight: 500;">
+                        Скасувати
+                    </a>
+                    <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius:10px;font-weight: 500;">
+                        <i class="bi bi-person-check me-2"></i>Призначити
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

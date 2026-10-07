@@ -1,0 +1,233 @@
+﻿@{
+    ViewData["Title"] = "Кошик";
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="mb-1">Кошик</h2>
+            <p class="text-muted mb-0 small">Перегляньте обрані товари перед оформленням</p>
+        </div>
+        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-cc px-4">
+            <i class="bi bi-arrow-left me-2"></i>Продовжити покупки
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-auto">
+            <div class="cc-stat-card">
+                <div class="cc-stat-icon"><i class="bi bi-cart3"></i></div>
+                <div>
+                    <div class="cc-stat-value" id="cart-banner-count">0</div>
+                    <div class="cc-stat-label">Товарів у кошику</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+
+            <div class="cc-table-wrapper" id="cart-empty" style="display:none;">
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-cart-x fs-2 d-block mb-2"></i>
+                    <span class="cc-serif d-block mb-1" style="font-size:1.1rem; color:#171717;">Кошик порожній</span>
+                    <a asp-controller="Product" asp-action="Index" class="text-cc-primary" style="font-size:.875rem; font-weight:500;">
+                        Перейти до каталогу →
+                    </a>
+                </div>
+            </div>
+
+            <div id="cart-items-wrapper" class="cc-table-wrapper" style="display:none;">
+                <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+                    <span class="fw-semibold cc-serif" style="font-size:1.1rem;">Обрані товари</span>
+                    <button onclick="clearCart()" class="cc-btn-table delete">
+                        <i class="bi bi-trash me-1"></i>Очистити кошик
+                    </button>
+                </div>
+                <div id="cart-items-list"></div>
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+            <div class="cc-form-card cc-sticky-side">
+                <h5 class="cc-serif mb-4" style="font-size:1.3rem;">Підсумок замовлення</h5>
+                <div class="d-flex flex-column gap-2 mb-4" id="cart-summary-lines"></div>
+                <div style="height:1px; background:rgba(139,69,19,.1); margin-bottom:1.25rem;"></div>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="fw-semibold text-dark">Разом:</span>
+                    <span id="cart-total" class="cc-serif text-cc-primary" style="font-size:1.75rem; font-weight:600;">0 ₴</span>
+                </div>
+                <button onclick="goToOrder()" class="btn btn-primary w-100 py-2" style="border-radius:10px; font-size:.9375rem;">
+                    <i class="bi bi-bag-check me-2"></i>Оформити замовлення
+                </button>
+                <a asp-controller="Product" asp-action="Index" class="d-block text-center mt-3 text-muted" style="font-size:.875rem;">
+                    ← Продовжити покупки
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .cc-cart-row {
+        display: grid;
+        grid-template-columns: 100px 1fr auto;
+        gap: 16px;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid #F5EEE8;
+        transition: background .12s;
+    }
+    .cc-cart-row:last-child { border-bottom: none; }
+    .cc-cart-row:hover { background: #FFFDFB; }
+
+    .cc-cart-img {
+        width: 100px; height: 100px;
+        border-radius: 14px;
+        border: 1px solid var(--cc-border);
+        background: #F5F5F5;
+        overflow: hidden;
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .cc-cart-img img { width: 100%; height: 100%; object-fit: cover; }
+
+    .cc-cart-name { font-size: 1rem; font-weight: 600; color: #171717; margin-bottom: 4px; }
+    .cc-cart-price-per { font-size: .82rem; color: #6B6B6B; }
+
+    .cc-cart-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+    .cc-cart-line-total { font-size: 1.05rem; font-weight: 600; color: #171717; white-space: nowrap; }
+
+    .cc-cart-actions { display: flex; align-items: center; gap: 8px; }
+
+    .cc-cart-qty { display: flex; align-items: center; gap: 4px; }
+    .cc-cart-qty-btn {
+        width: 28px; height: 28px;
+        border-radius: 6px;
+        background: #F5F5F5;
+        border: 1px solid var(--cc-border);
+        cursor: pointer; font-size: .9rem;
+        display: flex; align-items: center; justify-content: center;
+        transition: background .15s, color .15s, border-color .15s;
+        color: #2B2B2B;
+    }
+    .cc-cart-qty-btn:hover { background: var(--cc-primary); color: #fff; border-color: var(--cc-primary); }
+    .cc-cart-qty-val { min-width: 24px; text-align: center; font-weight: 600; font-size: .9rem; color: #171717; }
+
+    .cc-summary-row { display: flex; justify-content: space-between; align-items: center; }
+    .cc-summary-name { color: #6B6B6B; font-size: .875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+    .cc-summary-price { font-weight: 500; color: #2B2B2B; font-size: .875rem; white-space: nowrap; }
+    .cc-summary-delivery { display: flex; justify-content: space-between; align-items: center; padding-top: .5rem; border-top: 1px dashed rgba(139,69,19,.1); }
+</style>
+}
+
+@section Scripts {
+<script>
+    function getCart() { return JSON.parse(localStorage.getItem('cc_cart') || '[]'); }
+    function saveCart(cart) { localStorage.setItem('cc_cart', JSON.stringify(cart)); updateCartBadge(); }
+
+    function updateCartBadge() {
+        const count = getCart().reduce((s, i) => s + i.qty, 0);
+        document.querySelectorAll('.cc-cart-badge').forEach(el => {
+            el.textContent = count;
+            el.style.display = count > 0 ? 'flex' : 'none';
+        });
+    }
+
+    function renderCart() {
+        const cart    = getCart();
+        const empty   = document.getElementById('cart-empty');
+        const wrapper = document.getElementById('cart-items-wrapper');
+        const list    = document.getElementById('cart-items-list');
+        const summary = document.getElementById('cart-summary-lines');
+        const total   = document.getElementById('cart-total');
+        const banner  = document.getElementById('cart-banner-count');
+
+        if (cart.length === 0) {
+            empty.style.display = 'block'; wrapper.style.display = 'none';
+            if (banner)  banner.textContent = '0';
+            if (total)   total.textContent  = '0 ₴';
+            if (summary) summary.innerHTML  = '';
+            return;
+        }
+
+        empty.style.display = 'none'; wrapper.style.display = 'block';
+        let totalSum = 0, itemsHtml = '', summaryHtml = '';
+
+        cart.forEach((item, idx) => {
+            const lineSum = item.price * item.qty;
+            totalSum += lineSum;
+
+            itemsHtml += `
+            <div class="cc-cart-row">
+                <div class="cc-cart-img">
+                    ${item.image
+                        ? `<img src="${item.image}" alt="${item.name}">`
+                        : `<i class="bi bi-image" style="color:#BDBDBD; font-size:1.8rem;"></i>`}
+                </div>
+                <div>
+                    <div class="cc-cart-name">${item.name}</div>
+                    <div class="cc-cart-price-per">${item.price.toFixed(2)} ₴ за шт.</div>
+                </div>
+                <div class="cc-cart-right">
+                    <div class="cc-cart-line-total">${lineSum.toFixed(2)} ₴</div>
+                    <div class="cc-cart-actions">
+                        <div class="cc-cart-qty">
+                            <button class="cc-cart-qty-btn" onclick="changeQty(${idx}, -1)">−</button>
+                            <span class="cc-cart-qty-val">${item.qty}</span>
+                            <button class="cc-cart-qty-btn" onclick="changeQty(${idx}, 1)">+</button>
+                        </div>
+                        <button class="cc-btn-table delete" onclick="removeItem(${idx})"
+                                style="display:flex; align-items:center; justify-content:center; width:28px; height:28px; padding:0; cursor:pointer;">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+
+            summaryHtml += `
+            <div class="cc-summary-row">
+                <span class="cc-summary-name" title="${item.name}">${item.name} × ${item.qty}</span>
+                <span class="cc-summary-price">${lineSum.toFixed(2)} ₴</span>
+            </div>`;
+        });
+
+        list.innerHTML    = itemsHtml;
+        summary.innerHTML = summaryHtml;
+        total.textContent = totalSum.toFixed(2) + ' ₴';
+        if (banner) banner.textContent = cart.reduce((s, i) => s + i.qty, 0).toString();
+    }
+
+    function changeQty(idx, delta) {
+        const cart = getCart(); cart[idx].qty = Math.max(1, cart[idx].qty + delta);
+        saveCart(cart); renderCart();
+    }
+    function removeItem(idx) {
+        const cart = getCart(); cart.splice(idx, 1); saveCart(cart); renderCart();
+    }
+    function clearCart() { saveCart([]); renderCart(); }
+
+    function goToOrder() {
+        const cart = getCart();
+        if (cart.length === 0) return;
+        const params = new URLSearchParams();
+        cart.forEach((item, i) => {
+            params.append(`items[${i}].ProductId`, item.id);
+            params.append(`items[${i}].Quantity`,  item.qty);
+        });
+        const deliveryData = localStorage.getItem('cc_delivery');
+        if (deliveryData) {
+            const delivery = JSON.parse(deliveryData);
+            params.append('deliveryAddress', delivery.address);
+            params.append('deliveryCost', delivery.cost);
+        }
+        window.location.href = '/Order/PlaceOrder?' + params.toString();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { renderCart(); updateCartBadge(); });
+</script>
+}

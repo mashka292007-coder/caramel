@@ -1,0 +1,177 @@
+﻿@using CaramelCloud.UI.Models.Order
+@model EditOrderViewModel
+
+@{
+    ViewData["Title"] = $"Редагування замовлення #{Model.Id}";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1" style="font-family:'Cormorant Garamond',serif; font-size:2rem; color:#171717;">
+                Редагування замовлення #@Model.Id
+            </h2>
+            <p class="text-muted mb-0" style="font-size: .875rem;">
+                @if (Model.IsClientOrder)
+                {
+                    <span class="cc-badge cc-badge-source-site mt-1">
+                        <i class="bi bi-globe me-1"></i>Замовлення з сайту
+                    </span>
+                }
+                else
+                {
+                    <span>Оновлення даних замовлення</span>
+                }
+            </p>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-cc px-4">
+                <i class="bi bi-arrow-left me-2"></i>Назад
+            </a>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-cc px-4">
+                <i class="bi bi-card-list me-2"></i>До деталей
+            </a>
+        </div>
+    </div>
+
+    <div class="cc-form-card p-0" style="background: transparent; border: none; box-shadow: none;">
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id" type="hidden" />
+            <input asp-for="IsClientOrder" type="hidden" />
+
+            <div class="cc-section-block">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background: rgba(139,69,19,.1);">
+                        <i class="bi bi-person text-primary fs-5"></i>
+                    </div>
+                    <h5 class="fw-semibold text-dark m-0" style="font-family:'Cormorant Garamond',serif; font-size: 1.4rem;">
+                        1. Інформація про клієнта
+                    </h5>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="CustomerName" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <input asp-for="CustomerName" class="form-control" placeholder="Ім'я клієнта" />
+                        <span asp-validation-for="CustomerName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CustomerPhone" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <input asp-for="CustomerPhone" class="form-control" placeholder="+380..." />
+                        <span asp-validation-for="CustomerPhone" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cc-section-block">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background: rgba(139,69,19,.1);">
+                        <i class="bi bi-info-circle text-primary fs-5"></i>
+                    </div>
+                    <h5 class="fw-semibold text-dark m-0" style="font-family:'Cormorant Garamond',serif; font-size: 1.4rem;">
+                        2. Статус та оплата
+                    </h5>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="StatusId" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <select asp-for="StatusId" asp-items="Model.Statuses" class="form-select cursor-pointer"></select>
+                        <span asp-validation-for="StatusId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="PaymentMethodId" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <select asp-for="PaymentMethodId" asp-items="Model.PaymentMethods" class="form-select cursor-pointer">
+                            <option value="">— Не вказано —</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="DeliveryMethodId" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <select asp-for="DeliveryMethodId" asp-items="Model.DeliveryMethods" class="form-select cursor-pointer">
+                            <option value="">— Не вказано —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cc-section-block mb-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px; background: rgba(139,69,19,.1);">
+                        <i class="bi bi-truck text-primary fs-5"></i>
+                    </div>
+                    <h5 class="fw-semibold text-dark m-0" style="font-family:'Cormorant Garamond',serif; font-size: 1.4rem;">
+                        3. Доставка
+                    </h5>
+                </div>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="DeliveryAddressId" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <select asp-for="DeliveryAddressId" asp-items="Model.DeliveryAddresses" class="form-select cursor-pointer mb-2">
+                            <option value="">— Самовивіз / не вказано —</option>
+                        </select>
+                        <a asp-controller="DeliveryAddress" asp-action="Create"
+                           asp-route-returnUrl="@Url.Action("Edit", "Order", new { id = Model.Id })"
+                           class="text-primary fw-medium" style="font-size: 0.85rem; text-decoration: none;">
+                            <i class="bi bi-plus-circle me-1"></i>Нова адреса
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DeliveryDate" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                        <input asp-for="DeliveryDate" type="text" class="form-control datetimepicker cursor-pointer" placeholder="Оберіть дату і час..." style="background-color: #fff;" />
+                    </div>
+                </div>
+
+                <div>
+                    <label asp-for="Comment" class="cc-form-label text-muted small text-uppercase" style="letter-spacing:1px;"></label>
+                    <textarea asp-for="Comment" class="form-control" rows="3" style="border-radius: 16px; resize:none;" placeholder="Коментар до замовлення..."></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 mt-4">
+                <button type="submit" class="btn btn-primary px-5 py-3 fs-6">
+                    <i class="bi bi-check-circle me-2"></i>Зберегти зміни
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-light px-5 py-3 text-dark fs-6" style="border-radius: 50px; font-weight:600; border: 1px solid var(--cc-border);">
+                    Скасувати
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .cc-section-block {
+        background: #fff;
+        border: 1px solid var(--cc-border);
+        border-radius: 1.25rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,.02);
+    }
+    .cursor-pointer {
+        cursor: pointer !important;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/uk.js"></script>
+    
+    <script>
+        flatpickr(".datetimepicker", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true,
+            locale: "uk" 
+        });
+    </script>
+}

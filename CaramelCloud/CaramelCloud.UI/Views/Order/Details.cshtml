@@ -1,0 +1,300 @@
+﻿@using CaramelCloud.UI.Models.Order
+@using CaramelCloud.UI.Models.OrderAssignment
+@model OrderViewModel
+
+@{
+    ViewData["Title"] = $"Замовлення #{Model.Id}";
+    bool isAdmin = User.IsInRole("Admin");
+
+    var assignments = ViewBag.Assignments as List<AssignmentViewModel> ?? new();
+    var statuses = ViewBag.OrderStatuses as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
+
+    string GetAssignmentBadgeClass(int sid) => sid switch
+    {
+        3 => "cc-badge-status-4",
+        2 => "cc-badge-status-2",
+        _ => "cc-badge-status-1"
+    };
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="mb-1">Замовлення #@Model.Id</h2>
+            <p class="m-0 text-muted small">
+                @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm") · @Model.CreatedByUser
+                @if (Model.IsClientOrder)
+                {
+                    <span class="cc-badge cc-badge-source-site ms-2">
+                        <i class="bi bi-globe me-1"></i>З сайту
+                    </span>
+                }
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-cc">
+                <i class="bi bi-arrow-left me-1"></i>Назад
+            </a>
+            @if (isAdmin)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>Редагувати
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+
+            <div class="cc-form-card mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="m-0 cc-serif" style="font-size:1.4rem;">Статус</h5>
+                    <span class="cc-badge cc-badge-status-@(Model.StatusId > 0 && Model.StatusId <= 5 ? Model.StatusId : "default")"
+                          style="font-size:.85rem; padding:.4rem 1rem;">
+                        @Model.StatusName
+                    </span>
+                </div>
+                @if (isAdmin && statuses.Any())
+                {
+                    <form asp-action="UpdateStatus" method="post" class="d-flex gap-2 align-items-center pt-2"
+                          style="border-top:1px dashed var(--cc-border);">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@Model.Id" />
+                        <select asp-for="StatusId" asp-items="ViewBag.OrderStatuses" class="form-select">
+                            <option value="">-- Оберіть новий статус --</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary px-4 text-nowrap">Оновити</button>
+                    </form>
+                }
+            </div>
+
+            <div class="cc-table-wrapper mb-4">
+                <div class="card-header d-flex align-items-center px-4 py-3">
+                    <span class="cc-serif fw-semibold" style="font-size:1.2rem;">
+                        <i class="bi bi-box-seam me-2 text-cc-primary"></i>Позиції замовлення
+                    </span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table cc-table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Продукт</th>
+                                <th class="text-center">К-сть</th>
+                                <th class="text-end">Ціна</th>
+                                <th class="text-end">Сума</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-dark">@item.Name</td>
+                                    <td class="text-center text-muted">@item.Quantity</td>
+                                    <td class="text-end fw-medium">@item.UnitPrice.ToString("N2") ₴</td>
+                                    <td class="text-end fw-bold">@item.Total.ToString("N2") ₴</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr style="background:#FAFAFA;">
+                                <td colspan="3" class="text-end fw-bold text-muted"
+                                    style="font-size:.85rem; text-transform:uppercase; letter-spacing:.05em;">
+                                    РАЗОМ:
+                                </td>
+                                <td class="text-end fw-bold text-cc-primary" style="font-size:1.25rem;">
+                                    @Model.TotalAmount.ToString("N2") ₴
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            @if (isAdmin)
+            {
+                <div class="cc-table-wrapper mb-4">
+                    <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+                        <span class="cc-serif fw-semibold" style="font-size:1.2rem;">
+                            <i class="bi bi-people me-2 text-cc-primary"></i>Призначені працівники
+                        </span>
+                        <a asp-controller="OrderAssignment" asp-action="Create" asp-route-orderId="@Model.Id"
+                               class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-person-plus me-1"></i>Призначити
+                        </a>
+                    </div>
+
+                    @if (assignments.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table cc-table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Працівник</th>
+                                        <th>Тип завдання</th>
+                                        <th>Статус</th>
+                                        <th>Призначено</th>
+                                        <th>Виконано</th>
+                                        <th class="text-end">Дії</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var a in assignments)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold text-dark">@a.EmployeeName</td>
+                                            <td class="text-muted">@a.AssignmentType</td>
+                                            <td>
+                                                <span class="cc-badge @GetAssignmentBadgeClass(a.AssignmentStatusId)">
+                                                    @a.AssignmentStatus
+                                                </span>
+                                            </td>
+                                            <td class="text-muted" style="font-size:.85rem;">
+                                                @a.AssignedAt.ToString("dd.MM.yyyy HH:mm")
+                                            </td>
+                                            <td class="text-muted" style="font-size:.85rem;">
+                                                @(a.CompletedAt.HasValue ? a.CompletedAt.Value.ToString("dd.MM.yyyy HH:mm") : "—")
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-inline-flex gap-2">
+                                                    @if (a.AssignmentStatusId < 3)
+                                                    {
+                                                        @if (a.AssignmentStatusId == 1)
+                                                        {
+                                                            <form asp-controller="OrderAssignment" asp-action="UpdateStatus" method="post" class="m-0">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="assignmentId" value="@a.Id" />
+                                                                <input type="hidden" name="statusId" value="2" />
+                                                                <input type="hidden" name="orderId" value="@Model.Id" />
+                                                                <button type="submit" class="cc-btn-table edit">В роботу</button>
+                                                            </form>
+                                                        }
+                                                        <form asp-controller="OrderAssignment" asp-action="UpdateStatus" method="post" class="m-0">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="assignmentId" value="@a.Id" />
+                                                            <input type="hidden" name="statusId" value="3" />
+                                                            <input type="hidden" name="orderId" value="@Model.Id" />
+                                                            <button type="submit" class="cc-btn-table success"
+                                                                    onclick="return confirm('Позначити як виконано?')">
+                                                                Виконано
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                    <form asp-controller="OrderAssignment" asp-action="Delete" method="post" class="m-0">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@a.Id" />
+                                                        <input type="hidden" name="orderId" value="@Model.Id" />
+                                                        <button type="submit" class="cc-btn-table delete"
+                                                                onclick="return confirm('Видалити призначення?')">
+                                                            Видалити
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center py-4 m-0 small">Жодного призначення ще немає</p>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="cc-form-card mb-3">
+                <h6 class="text-cc-primary mb-3 cc-serif" style="font-size:1.2rem; font-weight:600;">
+                    <i class="bi bi-person me-2"></i>Клієнт
+                </h6>
+                <div class="mb-2">
+                    <div class="cc-detail-label">Ім'я</div>
+                    <div class="cc-detail-value">@(Model.CustomerName ?? "—")</div>
+                </div>
+                <div class="mb-2">
+                    <div class="cc-detail-label">Телефон</div>
+                    <div class="cc-detail-value">@(Model.CustomerPhone ?? "—")</div>
+                </div>
+                @if (Model.IsClientOrder && !string.IsNullOrEmpty(Model.CustomerEmail))
+                {
+                    <div>
+                        <div class="cc-detail-label">Email</div>
+                        <div class="cc-detail-value">
+                            <a href="mailto:@Model.CustomerEmail" class="text-cc-primary text-decoration-none">
+                                @Model.CustomerEmail
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="cc-form-card mb-3">
+                <h6 class="text-cc-primary mb-3 cc-serif" style="font-size:1.2rem; font-weight:600;">
+                    <i class="bi bi-truck me-2"></i>Доставка
+                </h6>
+                <div class="mb-2">
+                    <div class="cc-detail-label">Спосіб</div>
+                    <div class="cc-detail-value">@(Model.DeliveryMethod ?? "—")</div>
+                </div>
+                <div class="mb-2">
+                    <div class="cc-detail-label">Адреса</div>
+                    <div class="cc-detail-value">@(Model.DeliveryAddress ?? "Самовивіз")</div>
+                </div>
+                <div>
+                    <div class="cc-detail-label">Дата та час</div>
+                    <div class="cc-detail-value">
+                        @(Model.DeliveryDate.HasValue ? Model.DeliveryDate.Value.ToString("dd.MM.yyyy HH:mm") : "—")
+                    </div>
+                </div>
+            </div>
+
+            <div class="cc-form-card mb-3">
+                <h6 class="text-cc-primary mb-2 cc-serif" style="font-size:1.2rem; font-weight:600;">
+                    <i class="bi bi-credit-card me-2"></i>Оплата
+                </h6>
+                <div class="cc-detail-value">@(Model.PaymentMethod ?? "—")</div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Comment))
+            {
+                <div class="cc-form-card">
+                    <h6 class="text-cc-primary mb-2 cc-serif" style="font-size:1.2rem; font-weight:600;">
+                        <i class="bi bi-chat-text me-2"></i>Коментар
+                    </h6>
+                    <p class="m-0 text-muted" style="font-size:.9rem;">@Model.Comment</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .cc-btn-table.success {
+            background: rgba(40,167,69,.06);
+            color: #28a745;
+            border: 1px solid rgba(40,167,69,.2);
+        }
+
+            .cc-btn-table.success:hover {
+                background: #28a745;
+                color: #fff;
+            }
+    </style>
+}
+
+@section Scripts {
+    @if (TempData["ClearCart"] as bool? == true)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                localStorage.removeItem('cc_cart');
+            });
+        </script>
+    }
+}

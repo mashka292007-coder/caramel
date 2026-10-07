@@ -1,0 +1,100 @@
+﻿@model CaramelCloud.UI.Models.DeliveryAddress.CreateDeliveryAddressViewModel
+
+@{
+    ViewData["Title"] = "Нова адреса доставки";
+    var returnUrl = ViewBag.ReturnUrl as string;
+    var backLink = string.IsNullOrEmpty(returnUrl) ? "javascript:history.back()" : returnUrl;
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    
+    <div class="mx-auto" style="max-width: 750px;">
+        
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#171717;margin:0;font-weight:600;">
+                    Нова адреса доставки
+                </h2>
+                <p style="color:#6B6B6B;font-size:.875rem;margin:.25rem 0 0;">
+                    Заповніть форму нижче, щоб додати адресу для ваших майбутніх замовлень
+                </p>
+            </div>
+            
+            <a href="@backLink" class="btn btn-outline-primary px-4" style="border-radius:8px;">
+                <i class="bi bi-arrow-left me-2"></i>Назад
+            </a>
+        </div>
+
+        <div class="cc-form-card" style="background:#fff; border:1px solid var(--cc-border); border-radius:1.25rem; padding:2.5rem; box-shadow:0 4px 20px rgba(0,0,0,.03);">
+            
+            <div class="d-flex align-items-center mb-4" style="border-bottom: 1px solid #F5F5F5; padding-bottom: 1.5rem;">
+                <div style="background:#FFF5F5; color:#8B4513; width:45px; height:45px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-right:1rem;">
+                    <i class="bi bi-geo-alt fs-5"></i>
+                </div>
+                <div>
+                    <h5 style="font-family:'Cormorant Garamond',serif; font-weight:600; color:#8B4513; margin:0; font-size:1.3rem;">
+                        Деталі доставки
+                    </h5>
+                    <div style="font-size:0.8rem; color:#6B6B6B;">Вкажіть точні дані для кур'єра</div>
+                </div>
+            </div>
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <div class="row g-4">
+                    <div class="col-md-7">
+                        <label asp-for="City" class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+                            Місто / Населений пункт <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="City" class="form-control" style="border-radius:12px;padding:.85rem 1rem;border:1px solid var(--cc-border);" placeholder="Наприклад: Київ" />
+                        <span asp-validation-for="City" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    
+                    <div class="col-md-5">
+                        <label asp-for="PostalCode" class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+                            Поштовий індекс <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="PostalCode" class="form-control" style="border-radius:12px;padding:.85rem 1rem;border:1px solid var(--cc-border);" placeholder="01001" />
+                        <span asp-validation-for="PostalCode" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label asp-for="AddressLine" class="form-label fw-bold small text-uppercase" style="letter-spacing:1px;color:#6B6B6B;">
+                            Повна адреса (Вулиця, будинок, квартира) <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="AddressLine" class="form-control" style="border-radius:12px;padding:.85rem 1rem;border:1px solid var(--cc-border);" placeholder="вул. Хрещатик, буд. 1, кв. 5" />
+                        <span asp-validation-for="AddressLine" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="form-check d-flex align-items-center mt-2 p-3" style="background:#F8F9FA; border-radius:12px; border:1px solid #E9ECEF;">
+                            <input asp-for="IsDefault" class="form-check-input me-3" type="checkbox" id="isDefault" style="width: 1.25rem; height: 1.25rem; cursor: pointer; margin-left: 0;" />
+                            <label class="form-check-label" for="isDefault" style="cursor: pointer; color:#171717; font-weight: 500;">
+                                Використовувати цю адресу за замовчуванням
+                                <span class="d-block text-muted" style="font-size: 0.8rem; font-weight: 400;">
+                                    Наступного разу ця адреса буде обрана автоматично
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid #F5F5F5;" class="d-flex gap-3 justify-content-end align-items-center">
+                    <a href="@backLink" class="btn btn-light px-4 py-2" style="border-radius:10px;background:#F8F9FA;color:#6B6B6B;border:1px solid #E9ECEF;font-weight: 500;">
+                        Скасувати
+                    </a>
+                    <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius:10px;font-weight: 500;">
+                        <i class="bi bi-check-circle me-2"></i>Зберегти адресу
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,118 @@
+﻿@model IEnumerable<CaramelCloud.Domain.Entities.CakeFillingType>
+@{
+    ViewData["Title"] = "Типи начинок";
+}
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#171717;margin:0;">Типи начинок</h2>
+            <p style="color:#6B6B6B;font-size:.875rem;margin:.25rem 0 0;">Довідник начинок для конструктора торта</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary px-4">
+            <i class="bi bi-plus-lg me-2"></i>Додати начинку
+        </a>
+    </div>
+
+    <div class="cc-table-wrapper">
+        <div class="card-header d-flex align-items-center justify-content-between px-4 py-3">
+            <span class="fw-semibold text-dark" style="font-family:'Cormorant Garamond',serif; font-size:1.1rem;">
+                Список начинок
+            </span>
+            <div class="cc-search-wrapper">
+                <i class="bi bi-search cc-search-icon"></i>
+                <input type="text" class="form-control cc-search-input" placeholder="Пошук..." onkeyup="filterFillings(this.value)">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table cc-table align-middle mb-0" id="fillingsTable">
+                <thead>
+                    <tr>
+                        <th style="width:80px; padding-left:1.5rem;">Фото</th>
+                        <th style="width:25%;">Назва</th>
+                        <th>Опис</th>
+                        <th class="text-end" style="width:120px;">Доплата</th>
+                        <th class="text-center" style="width:130px;">Статус</th>
+                        <th class="text-center" style="width:220px; padding-right:1.5rem;">Дії</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td style="padding-left:1.5rem;">
+                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                {
+                                    <img src="@item.ImageUrl" style="width:48px;height:48px;object-fit:cover;border-radius:10px; border:1px solid #EAEAEA;" />
+                                }
+                                else
+                                {
+                                    <div style="width:48px;height:48px;border-radius:10px;background:rgba(139,69,19,.08);
+                                        display:flex;align-items:center;justify-content:center;">
+                                        <i class="bi bi-droplet-half" style="color:#8B4513; font-size:1.2rem;"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark" style="font-size:0.95rem;">@item.Name</div>
+                            </td>
+                            <td style="color:#6B6B6B;font-size:.85rem;">
+                                @(string.IsNullOrWhiteSpace(item.Description) ? "—" : item.Description)
+                            </td>
+                            <td class="text-end">
+                                <span class="fw-bold" style="color:#8B4513;">+@item.ExtraPrice.ToString("N0") <small style="font-size:0.7rem;">ГРН</small></span>
+                            </td>
+                            <td class="text-center">
+                                @if (item.IsAvailable)
+                                {
+                                    <span class="cc-badge cc-badge-source-site">Активна</span>
+                                }
+                                else
+                                {
+                                    <span class="cc-badge" style="background:#FFF3E0;color:#E65100;">Вимкнено</span>
+                                }
+                            </td>
+                            <td class="text-end" style="padding-right:1.5rem;">
+                                <div class="d-inline-flex gap-1">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="cc-btn-table edit">Редагувати</a>
+                                    <form asp-action="Delete" method="post" class="d-inline"
+                                          onsubmit="return confirm('Видалити «@item.Name»?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="cc-btn-table delete" style="border:none; padding-top:0.35rem; padding-bottom:0.35rem;">
+                                            Видалити
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-droplet-half fs-2 d-block mb-2"></i>
+                                Типів начинок ще немає
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterFillings(val) {
+            const rows = document.querySelectorAll('#fillingsTable tbody tr');
+            const q = val.toLowerCase();
+            rows.forEach(r => {
+                if (r.querySelector('td').colSpan > 1) return;
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+}

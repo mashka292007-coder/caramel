@@ -1,0 +1,129 @@
+﻿@using CaramelCloud.UI.Models.Employee
+@model EmployeeViewModel
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif; font-size:2rem; color:#171717; margin:0;">
+                Видалення працівника
+            </h2>
+            <p style="color:#6B6B6B; font-size:.875rem; margin:.25rem 0 0;">
+                Підтвердіть видалення співробітника
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-primary px-4" style="border-radius:8px; font-size:.9rem;">
+            <i class="bi bi-arrow-left me-2"></i>Назад до списку
+        </a>
+    </div>
+
+    <div style="background:rgba(220,53,69,.06); border:1px solid rgba(220,53,69,.2);
+        border-radius:1rem; padding:1.25rem 1.5rem; margin-bottom:1.5rem;
+        display:flex; align-items:flex-start; gap:1rem;">
+        <div style="width:44px; height:44px; border-radius:10px;
+            background:rgba(220,53,69,.1); flex-shrink:0;
+            display:flex; align-items:center; justify-content:center;">
+            <i class="bi bi-exclamation-triangle" style="color:#dc3545; font-size:1.2rem;"></i>
+        </div>
+        <div>
+            <div style="font-weight:600; color:#171717; font-size:.95rem; margin-bottom:.25rem;">
+                Увага! Цю дію неможливо скасувати
+            </div>
+            <div style="color:#6B6B6B; font-size:.875rem; line-height:1.6;">
+                Ви збираєтесь видалити працівника
+                <strong style="color:#171717;">@Model.LastName @Model.FirstName</strong>.
+                Якщо за ним закріплені активні завдання — видалення може бути заблоковано.
+            </div>
+        </div>
+    </div>
+
+    <div class="cc-form-card">
+        <div style="margin-bottom:2rem;">
+            <p style="font-size:.72rem; font-weight:700; text-transform:uppercase;
+                letter-spacing:.07em; color:#6B6B6B; margin-bottom:1.25rem;">
+                Дані працівника
+            </p>
+
+            <div style="display:grid; gap:.75rem;">
+
+                <div style="display:flex; align-items:center; padding:.75rem 1rem;
+                    background:#FAFAFA; border-radius:10px; border:1px solid var(--cc-border);">
+                    <span style="width:160px; font-size:.8rem; color:#6B6B6B; flex-shrink:0;">Ім'я</span>
+                    <span style="font-weight:600; color:#171717;">@Model.FirstName</span>
+                </div>
+
+                <div style="display:flex; align-items:center; padding:.75rem 1rem;
+                    background:#FAFAFA; border-radius:10px; border:1px solid var(--cc-border);">
+                    <span style="width:160px; font-size:.8rem; color:#6B6B6B; flex-shrink:0;">Прізвище</span>
+                    <span style="font-weight:600; color:#171717;">@Model.LastName</span>
+                </div>
+
+                <div style="display:flex; align-items:center; padding:.75rem 1rem;
+                    background:#FAFAFA; border-radius:10px; border:1px solid var(--cc-border);">
+                    <span style="width:160px; font-size:.8rem; color:#6B6B6B; flex-shrink:0;">Телефон</span>
+                    <span style="color:#6B6B6B;">
+                        @(string.IsNullOrEmpty(Model.Phone) ? "—" : Model.Phone)
+                    </span>
+                </div>
+
+                <div style="display:flex; align-items:center; padding:.75rem 1rem;
+                    background:#FAFAFA; border-radius:10px; border:1px solid var(--cc-border);">
+                    <span style="width:160px; font-size:.8rem; color:#6B6B6B; flex-shrink:0;">Посада</span>
+                    <span style="background:rgba(139,69,19,.1); color:#A05A2C;
+                        border:1px solid rgba(139,69,19,.15); border-radius:50px;
+                        font-size:.75rem; font-weight:600; padding:.2rem .75rem;">
+                        @Model.PositionName
+                    </span>
+                </div>
+
+                <div style="display:flex; align-items:center; padding:.75rem 1rem;
+                    background:#FAFAFA; border-radius:10px; border:1px solid var(--cc-border);">
+                    <span style="width:160px; font-size:.8rem; color:#6B6B6B; flex-shrink:0;">Дата прийому</span>
+                    <span style="color:#6B6B6B; font-size:.875rem;">
+                        @(Model.HiredAt.HasValue? Model.HiredAt.Value.ToString("dd.MM.yyyy") : "—")
+                    </span>
+                </div>
+
+                <div style="display:flex; align-items:center; padding:.75rem 1rem;
+                    background:#FAFAFA; border-radius:10px; border:1px solid var(--cc-border);">
+                    <span style="width:160px; font-size:.8rem; color:#6B6B6B; flex-shrink:0;">Статус</span>
+                    @if (Model.IsActive)
+                    {
+                        <span style="background:rgba(22,163,74,.1); color:#15803d;
+                            border-radius:50px; font-size:.73rem; font-weight:600;
+                            padding:.2rem .75rem;">
+                            Активний
+                        </span>
+                    }
+                    else
+                    {
+                        <span style="background:rgba(107,114,128,.1); color:#4b5563;
+                            border-radius:50px; font-size:.73rem; font-weight:600;
+                            padding:.2rem .75rem;">
+                            Неактивний
+                        </span>
+                    }
+                </div>
+
+            </div>
+        </div>
+
+        <div style="padding-top:2rem; border-top:1px solid #F5F5F5;" class="d-flex gap-3">
+            <form method="post">
+                <input asp-for="Id" type="hidden" />
+                <button type="submit"
+                        style="background:#dc3545; color:#fff; border:none;
+                    border-radius:10px; padding:.6rem 2rem;
+                    font-weight:600; font-size:.9375rem; cursor:pointer;
+                    transition:opacity .2s;"
+                        onmouseover="this.style.opacity='.85'"
+                        onmouseout="this.style.opacity='1'">
+                    <i class="bi bi-trash me-2"></i>Так, видалити
+                </button>
+            </form>
+            <a asp-action="Index" class="btn btn-light px-4 py-2"
+                   style="border-radius:10px; background:#F8F9FA; color:#6B6B6B; border:1px solid #E9ECEF;">
+                Скасувати
+            </a>
+        </div>
+    </div>
+</div>

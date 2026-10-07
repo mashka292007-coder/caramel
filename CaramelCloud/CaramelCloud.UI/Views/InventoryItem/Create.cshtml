@@ -1,0 +1,77 @@
+﻿@using CaramelCloud.UI.Models.InventoryItem
+@model CreateInventoryItemViewModel
+
+<div class="container-fluid pt-4 px-4 pb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 style="font-family:'Cormorant Garamond',serif; font-size:2rem; color:#171717; margin:0;">
+                Нова позиція складу
+            </h2>
+            <p style="color:#6B6B6B; font-size:.875rem; margin:.25rem 0 0;">
+                Заповніть дані про новий інгредієнт
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-primary px-4" style="border-radius:8px; font-size:.9rem;">
+            <i class="bi bi-arrow-left me-2"></i>Назад до списку
+        </a>
+    </div>
+
+    <div class="cc-form-card">
+        <form method="post">
+
+            <div class="mb-4">
+                <label asp-for="ItemName" class="form-label fw-bold small text-uppercase"
+                       style="letter-spacing:1px; color:#6B6B6B;">Назва інгредієнта</label>
+                <input asp-for="ItemName" class="form-control" placeholder="Наприклад: Борошно пшеничне"
+                       style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                <span asp-validation-for="ItemName" class="text-danger small"></span>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="Quantity" class="form-label fw-bold small text-uppercase"
+                           style="letter-spacing:1px; color:#6B6B6B;">Кількість</label>
+                    <input asp-for="Quantity" class="form-control" placeholder="0.000"
+                           style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                    <span asp-validation-for="Quantity" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Unit" class="form-label fw-bold small text-uppercase"
+                           style="letter-spacing:1px; color:#6B6B6B;">Одиниця виміру</label>
+                    <input asp-for="Unit" class="form-control" placeholder="кг, л, шт..."
+                           style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                    <span asp-validation-for="Unit" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="MinQuantity" class="form-label fw-bold small text-uppercase"
+                       style="letter-spacing:1px; color:#6B6B6B;">Мінімальна кількість</label>
+                <input asp-for="MinQuantity" class="form-control" placeholder="0.000"
+                       style="border-radius:12px; padding:.75rem 1rem; border:1px solid var(--cc-border);" />
+                <div style="display:flex; align-items:center; gap:.4rem; margin-top:.4rem;
+                    color:#6B6B6B; font-size:.8rem;">
+                    <i class="bi bi-info-circle" style="color:#8B4513;"></i>
+                    Якщо поточна кількість опуститься нижче цього значення — позиція буде позначена як критична
+                </div>
+                <span asp-validation-for="MinQuantity" class="text-danger small"></span>
+            </div>
+
+            <div style="margin-top:3rem; padding-top:2rem; border-top:1px solid #F5F5F5;"
+                 class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary px-5 py-2" style="border-radius:10px;">
+                    <i class="bi bi-plus-lg me-2"></i>Додати позицію
+                </button>
+                <a asp-action="Index" class="btn btn-light px-4 py-2"
+                       style="border-radius:10px; background:#F8F9FA; color:#6B6B6B; border:1px solid #E9ECEF;">
+                    Скасувати
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
